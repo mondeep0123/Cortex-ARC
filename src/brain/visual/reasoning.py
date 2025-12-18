@@ -53,6 +53,7 @@ class TransformType(Enum):
     GRAVITY_DOWN = auto()   # Objects fall down
     GRAVITY_LEFT = auto()   # Objects move left
     TRANSPOSE = auto()      # Swap rows and columns
+    EXTRACT_FRAME = auto()  # Extract content inside a color frame
     
     UNKNOWN = auto()        # Can't determine
 
@@ -387,6 +388,31 @@ def detect_grid_transform(input_grid: np.ndarray, output_grid: np.ndarray) -> Op
         if np.array_equal(tiled, output_grid):
             return TransformType.TILE_3X
     
+    # Check for EXTRACT_FRAME: content inside a color frame
+    if H_out < H_in and W_out < W_in:
+        for c in set(input_grid.flatten()):
+            if c == 0:
+                continue
+            mask = (input_grid == c)
+            coords = np.argwhere(mask)
+            if len(coords) < 4:
+                continue
+            
+            min_r, min_c = coords.min(axis=0)
+            max_r, max_c = coords.max(axis=0)
+            
+            # Check if this color forms a rectangle frame
+            top_row = mask[min_r, min_c:max_c+1]
+            bot_row = mask[max_r, min_c:max_c+1]
+            left_col = mask[min_r:max_r+1, min_c]
+            right_col = mask[min_r:max_r+1, max_c]
+            
+            if top_row.all() and bot_row.all() and left_col.all() and right_col.all():
+                # Extract content inside the frame
+                inside = input_grid[min_r+1:max_r, min_c+1:max_c]
+                if inside.shape == output_grid.shape and np.array_equal(inside, output_grid):
+                    return TransformType.EXTRACT_FRAME
+    
     # Check crop (output is a subgrid of input)
     if H_out <= H_in and W_out <= W_in and (H_out < H_in or W_out < W_in):
         # Try to find output as a subgrid
@@ -453,6 +479,28 @@ def detect_grid_transform_with_params(
             return TransformType.TILE_2X, {"tiles": 2}
         if simple_transform == TransformType.TILE_3X:
             return TransformType.TILE_3X, {"tiles": 3}
+        
+        # For EXTRACT_FRAME, find the frame color
+        if simple_transform == TransformType.EXTRACT_FRAME:
+            for c in set(input_grid.flatten()):
+                if c == 0:
+                    continue
+                mask = (input_grid == c)
+                coords = np.argwhere(mask)
+                if len(coords) < 4:
+                    continue
+                
+                min_r, min_c = coords.min(axis=0)
+                max_r, max_c = coords.max(axis=0)
+                
+                # Check if this color forms a rectangle frame
+                top_row = mask[min_r, min_c:max_c+1]
+                bot_row = mask[max_r, min_c:max_c+1]
+                left_col = mask[min_r:max_r+1, min_c]
+                right_col = mask[min_r:max_r+1, max_c]
+                
+                if top_row.all() and bot_row.all() and left_col.all() and right_col.all():
+                    return TransformType.EXTRACT_FRAME, {"frame_color": int(c)}
         
         # Other transforms don't need params
         return simple_transform, {}
@@ -655,6 +703,33 @@ class TransformationRule:
             min_r, min_c = non_bg.min(axis=0)
             max_r, max_c = non_bg.max(axis=0)
             return result[min_r:max_r+1, min_c:max_c+1]
+        
+        elif self.transform_type == TransformType.EXTRACT_FRAME:
+            # Always auto-detect frame (different inputs may have different frame colors)
+            # Find any color that forms a complete rectangle frame
+            
+            # Fallback: try to find any frame
+            for c in set(result.flatten()):
+                if c == 0:
+                    continue
+                mask = (result == c)
+                coords = np.argwhere(mask)
+                if len(coords) < 4:
+                    continue
+                
+                min_r, min_c = coords.min(axis=0)
+                max_r, max_c = coords.max(axis=0)
+                
+                # Check if this color forms a rectangle frame
+                top_row = mask[min_r, min_c:max_c+1]
+                bot_row = mask[max_r, min_c:max_c+1]
+                left_col = mask[min_r:max_r+1, min_c]
+                right_col = mask[min_r:max_r+1, max_c]
+                
+                if top_row.all() and bot_row.all() and left_col.all() and right_col.all():
+                    return result[min_r+1:max_r, min_c+1:max_c]
+            
+            return result
         
         elif self.transform_type == TransformType.GRAVITY_DOWN:
             # Move all non-zero cells down as far as possible
