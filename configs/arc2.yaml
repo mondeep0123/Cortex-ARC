@@ -1,0 +1,29 @@
+# ARC-AGI-2 specific configuration
+defaults:
+  - base
+
+data:
+  arc_version: "arc2"
+  training_tasks: 100
+  evaluation_tasks: 100
+  test_tasks: 100
+  # ARC-AGI-2 has fewer training examples per task (2-5 vs 2-10)
+  max_train_pairs: 5
+
+training:
+  epochs: 100
+  batch_size: 8
+  learning_rate: 0.0005
+
+solver:
+  type: "hybrid"
+  max_search_depth: 10
+  beam_width: 20
+  use_refinement: true
+  refinement_steps: 5
+  # ARC-AGI-2 is harder, need more aggressive search
+  use_test_time_training: true
+  ttt_steps: 100
+
+evaluation:
+  timeout_per_task: 120  # More time for harder tasks

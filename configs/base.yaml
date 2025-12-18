@@ -1,0 +1,62 @@
+# Base configuration for ARC-AGI experiments
+project:
+  name: "arc-agi-solver"
+  version: "0.1.0"
+
+# Data settings
+data:
+  arc_version: "both"  # "arc1", "arc2", or "both"
+  data_dir: "data/"
+  cache_dir: ".cache/"
+  
+# Grid settings
+grid:
+  max_size: 30
+  num_colors: 10
+  colors:
+    0: "black"
+    1: "blue"
+    2: "red"
+    3: "green"
+    4: "yellow"
+    5: "grey"
+    6: "magenta"
+    7: "orange"
+    8: "cyan"
+    9: "maroon"
+
+# Training settings
+training:
+  batch_size: 32
+  learning_rate: 0.001
+  epochs: 100
+  optimizer: "adamw"
+  scheduler: "cosine"
+  warmup_steps: 100
+  gradient_clip: 1.0
+  
+# Evaluation settings
+evaluation:
+  num_attempts: 2
+  timeout_per_task: 60  # seconds
+  
+# Solver settings
+solver:
+  type: "hybrid"  # Options: brute_force, program_synthesis, neural, symbolic, hybrid
+  max_search_depth: 5
+  beam_width: 10
+  use_refinement: true
+  refinement_steps: 3
+
+# Logging
+logging:
+  level: "INFO"
+  save_dir: "experiments/logs/"
+  use_wandb: false
+  wandb_project: "arc-agi-solver"
+
+# Hardware
+hardware:
+  device: "cuda"
+  num_workers: 4
+  pin_memory: true

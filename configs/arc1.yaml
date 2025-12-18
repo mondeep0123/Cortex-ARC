@@ -1,0 +1,18 @@
+# ARC-AGI-1 specific configuration
+defaults:
+  - base
+
+data:
+  arc_version: "arc1"
+  training_tasks: 400
+  evaluation_tasks: 400
+  test_tasks: 100
+
+training:
+  epochs: 50
+  batch_size: 16
+
+solver:
+  type: "hybrid"
+  max_search_depth: 7
+  beam_width: 15
