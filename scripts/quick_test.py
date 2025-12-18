@@ -1,4 +1,4 @@
-"""Complete test of all transforms."""
+"""Complete test of all transforms - verbose."""
 import sys
 sys.path.insert(0, '.')
 

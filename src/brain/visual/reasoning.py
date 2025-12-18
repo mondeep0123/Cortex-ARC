@@ -259,6 +259,9 @@ class TransformationSignature:
     # Rotation info
     rotation_type: Optional[TransformType] = None
     
+    # Transform parameters (for transforms that need extra info like CROP position)
+    transform_params: Dict[str, any] = field(default_factory=dict)
+    
     # Color mapping
     color_mapping: Dict[int, int] = field(default_factory=dict)
     
@@ -396,6 +399,67 @@ def detect_grid_transform(input_grid: np.ndarray, output_grid: np.ndarray) -> Op
     return None
 
 
+def detect_grid_transform_with_params(
+    input_grid: np.ndarray, 
+    output_grid: np.ndarray
+) -> Tuple[Optional[TransformType], Dict]:
+    """
+    Detect grid-level transform AND return parameters.
+    Used for transforms that need parameters (like CROP position).
+    
+    Returns:
+        (transform_type, parameters) or (None, {})
+    """
+    H_in, W_in = input_grid.shape
+    H_out, W_out = output_grid.shape
+    
+    # First check simple transforms
+    simple_transform = detect_grid_transform(input_grid, output_grid)
+    
+    if simple_transform is not None:
+        # For CROP, we need to find the position and check if it's bounding-box style
+        if simple_transform == TransformType.CROP:
+            # First, check if output is the bounding box of non-zero content
+            bg_color = 0
+            non_bg = np.argwhere(input_grid != bg_color)
+            if len(non_bg) > 0:
+                min_r, min_c = non_bg.min(axis=0)
+                max_r, max_c = non_bg.max(axis=0)
+                bbox = input_grid[min_r:max_r+1, min_c:max_c+1]
+                
+                if np.array_equal(bbox, output_grid):
+                    # It's bounding box style - use "bbox" mode
+                    return TransformType.CROP, {"mode": "bbox", "bg_color": bg_color}
+            
+            # Otherwise, find the exact position
+            for r in range(H_in - H_out + 1):
+                for c in range(W_in - W_out + 1):
+                    subgrid = input_grid[r:r+H_out, c:c+W_out]
+                    if np.array_equal(subgrid, output_grid):
+                        return TransformType.CROP, {
+                            "mode": "fixed",
+                            "row": r, 
+                            "col": c,
+                            "height": H_out,
+                            "width": W_out
+                        }
+        
+        # For scaling transforms, include the factor
+        if simple_transform == TransformType.SCALE_2X:
+            return TransformType.SCALE_2X, {"factor": 2}
+        if simple_transform == TransformType.SCALE_3X:
+            return TransformType.SCALE_3X, {"factor": 3}
+        if simple_transform == TransformType.TILE_2X:
+            return TransformType.TILE_2X, {"tiles": 2}
+        if simple_transform == TransformType.TILE_3X:
+            return TransformType.TILE_3X, {"tiles": 3}
+        
+        # Other transforms don't need params
+        return simple_transform, {}
+    
+    return None, {}
+
+
 # ============================================================================
 # COMPARISON MODULE
 # ============================================================================
@@ -419,12 +483,15 @@ class ComparisonModule:
         """
         sig = TransformationSignature()
         
-        # Check for grid-level transformations (but don't return early)
-        grid_transform = detect_grid_transform(input_visual.grid, output_visual.grid)
+        # Check for grid-level transformations WITH parameters
+        grid_transform, transform_params = detect_grid_transform_with_params(
+            input_visual.grid, output_visual.grid
+        )
         if grid_transform is not None:
             sig.has_rotation = True
             sig.rotation_type = grid_transform
-            # NOTE: Don't return early anymore - let extract_rules verify consistency
+            sig.transform_params = transform_params
+            # NOTE: Don't return early - let extract_rules verify consistency
         
         # Index objects for quick lookup
         input_objs = {o.object_id: o for o in input_visual.objects}
@@ -560,7 +627,27 @@ class TransformationRule:
             return result.T
         
         elif self.transform_type == TransformType.CROP:
-            # Crop to bounding box of non-zero content
+            mode = self.parameters.get("mode", "bbox")
+            
+            # Bounding box mode: crop to bbox of non-zero content
+            if mode == "bbox":
+                bg_color = self.parameters.get("bg_color", 0)
+                non_bg = np.argwhere(result != bg_color)
+                if len(non_bg) == 0:
+                    return result
+                min_r, min_c = non_bg.min(axis=0)
+                max_r, max_c = non_bg.max(axis=0)
+                return result[min_r:max_r+1, min_c:max_c+1]
+            
+            # Fixed position mode: use explicit position from training
+            elif mode == "fixed" and "row" in self.parameters and "col" in self.parameters:
+                r = self.parameters["row"]
+                c = self.parameters["col"]
+                h = self.parameters.get("height", result.shape[0] - r)
+                w = self.parameters.get("width", result.shape[1] - c)
+                return result[r:r+h, c:c+w]
+            
+            # Fallback: crop to bounding box
             bg_color = self.parameters.get("bg_color", 0)
             non_bg = np.argwhere(result != bg_color)
             if len(non_bg) == 0:
@@ -615,8 +702,11 @@ def extract_rules(signatures: List[TransformationSignature]) -> List[Transformat
     rotations = [s.rotation_type for s in signatures if s.has_rotation and s.rotation_type]
     if len(rotations) == len(signatures) and len(set(rotations)) == 1:
         # All examples have the same rotation type
+        # Use transform params from first signature (they should be consistent)
+        params = signatures[0].transform_params if signatures[0].transform_params else {}
         rules.append(TransformationRule(
             transform_type=rotations[0],
+            parameters=params,
             confidence=1.0
         ))
         return rules  # If rotation detected, that's the only rule needed
