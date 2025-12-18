@@ -3,7 +3,6 @@
 from .encoder import GridEncoder, ColorEmbedding, PositionEmbedding
 from .decoder import GridDecoder
 from .cortex import CortexModel, ReasoningCore, ReasoningBlock
-from .fewshot import FewShotARC, ExampleEncoder, PatternAggregator, FewShotReasoner
 
 __all__ = [
     'GridEncoder',
@@ -13,8 +12,4 @@ __all__ = [
     'CortexModel',
     'ReasoningCore',
     'ReasoningBlock',
-    'FewShotARC',
-    'ExampleEncoder',
-    'PatternAggregator',
-    'FewShotReasoner',
 ]
