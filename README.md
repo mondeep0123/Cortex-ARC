@@ -1,121 +1,175 @@
 # 🧠 Cortex-ARC
 
-> A brain-inspired architecture for solving ARC-AGI puzzles (v1 & v2)
+> A brain-inspired **learning architecture** for general reasoning
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🎯 What is This?
+---
 
-**Cortex-ARC** is a modular, brain-inspired AI system designed to solve the [ARC-AGI](https://arcprize.org) benchmark — a test of general intelligence through abstract visual reasoning puzzles.
+## ⚠️ Vision Clarification
 
-### Architecture
+**This project is NOT about hardcoding patterns.**
 
-The system is organized like regions of the brain:
+The goal is to build a system that **LEARNS fundamental cognitive abilities** — not puzzle-specific classifiers.
+
+---
+
+## 🎯 True Vision
+
+### Core Principle: Train Cognitive Experts, Not Puzzle Solvers
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Cortex-ARC Brain                        │
-├──────────────────┬──────────────────┬───────────────────────┤
-│   Visual Cortex   │    Reasoning     │     Rule Engine       │
-│  (Perception)     │   (Matching)     │   (Transformation)    │
-├──────────────────┼──────────────────┼───────────────────────┤
-│ • Object Detection│ • Object Matcher │ • Translation         │
-│ • Background Det. │ • Comparison     │ • Rotation/Flip       │
-│ • Color Encoding  │ • Signatures     │ • Recolor             │
-└──────────────────┴──────────────────┴───────────────────────┘
+❌ WRONG: Train "RotationDetector", "CropDetector", "FlipDetector"
+           → These are just classifiers for specific puzzles
+           
+✅ RIGHT: Train "ColorExpert", "SpatialExpert", "PatternExpert"
+           → These are fundamental cognitive abilities
+           → They COMPOSE to solve ANY puzzle
 ```
 
-## 📊 Current Results
+### The Micro-Model Philosophy
 
-| Test Suite | Accuracy | Notes |
-|------------|----------|-------|
-| Synthetic Tests | **100%** (9/9) | Translation, rotation, flip, recolor |
-| ARC-AGI-1 Rotation Puzzles | **100%** (5/5) | Pure rotation/flip tasks |
-| ARC-AGI-1 Overall | 2% | Only handles simple transformations so far |
+Each micro-model is an **expert in a cognitive domain**, not a puzzle type:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COGNITIVE MICRO-MODELS                           │
+│                                                                      │
+│   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐             │
+│   │    Color     │  │   Spatial    │  │   Pattern    │             │
+│   │   Expert     │  │   Expert     │  │   Expert     │             │
+│   │              │  │              │  │              │             │
+│   │ Understands: │  │ Understands: │  │ Understands: │             │
+│   │ • Hue        │  │ • Position   │  │ • Repetition │             │
+│   │ • Contrast   │  │ • Distance   │  │ • Symmetry   │             │
+│   │ • Grouping   │  │ • Direction  │  │ • Sequence   │             │
+│   │ • Similarity │  │ • Boundaries │  │ • Hierarchy  │             │
+│   └──────────────┘  └──────────────┘  └──────────────┘             │
+│          │                 │                 │                      │
+│          └─────────────────┼─────────────────┘                      │
+│                            ▼                                        │
+│                  ┌──────────────────┐                               │
+│                  │   Object Expert   │                              │
+│                  │                   │                              │
+│                  │ Combines color,   │                              │
+│                  │ spatial, pattern  │                              │
+│                  │ to understand     │                              │
+│                  │ OBJECTS           │                              │
+│                  └──────────────────┘                               │
+│                            │                                        │
+│                            ▼                                        │
+│                  ┌──────────────────┐                               │
+│                  │  Relation Expert  │                              │
+│                  │                   │                              │
+│                  │ Understands how   │                              │
+│                  │ objects RELATE    │                              │
+│                  │ to each other     │                              │
+│                  └──────────────────┘                               │
+│                            │                                        │
+│                            ▼                                        │
+│                  ┌──────────────────┐                               │
+│                  │ Reasoning Expert  │                              │
+│                  │                   │                              │
+│                  │ Uses all experts  │                              │
+│                  │ to INFER rules    │                              │
+│                  │ and apply them    │                              │
+│                  └──────────────────┘                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+Each expert is a LEARNED neural network.
+Experts COMMUNICATE through shared representations.
+Experts COMPOSE to solve any problem.
+```
+
+---
+
+## 🧠 Why This Matters
+
+### Puzzle-Specific vs Cognitive Abilities
+
+| Puzzle-Specific (WRONG) | Cognitive (RIGHT) |
+|-------------------------|-------------------|
+| Detects rotation | Understands spatial relationships |
+| Detects cropping | Understands boundaries and regions |
+| Detects color swap | Understands color relationships |
+| **Fails on new puzzles** | **Composes to solve new puzzles** |
+
+### Example: Solving a "Rotation" Puzzle
+
+**With Puzzle-Specific Approach:**
+```
+1. Hardcoded "RotationDetector" recognizes rotation
+2. Apply np.rot90()
+3. Done (but fails on ANY variation)
+```
+
+**With Cognitive Approach:**
+```
+1. Spatial Expert: "The pixel positions changed in a circular pattern"
+2. Pattern Expert: "This matches the concept of angular transformation"
+3. Relation Expert: "Input corners map to output corners with 90° shift"
+4. Reasoning Expert: "Apply the same spatial transformation"
+5. Works on ANY spatial transformation, not just hardcoded ones
+```
+
+---
+
+## 🏗️ Cognitive Micro-Models
+
+| Expert | Learns | Used For |
+|--------|--------|----------|
+| **Color Expert** | Color relationships, grouping, contrast | Understanding which pixels belong together |
+| **Spatial Expert** | Positions, distances, directions | Understanding where things are |
+| **Pattern Expert** | Repetition, symmetry, sequences | Finding structure in data |
+| **Object Expert** | Entity boundaries, properties | Recognizing distinct objects |
+| **Relation Expert** | How entities relate | Understanding transformations |
+| **Memory Expert** | Store and retrieve | Learning from examples |
+| **Reasoning Expert** | Inference, composition | Solving the puzzle |
+
+---
+
+## 📊 Current Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Data Infrastructure | ✅ Complete | - |
+| Hardcoded Baseline | ⚠️ Deprecated | Wrong approach, kept for reference |
+| Color Expert | 📋 Planned | First cognitive micro-model |
+| Spatial Expert | 📋 Planned | - |
+| Pattern Expert | 📋 Planned | - |
+| Orchestration | 📋 Planned | Communication between experts |
+
+---
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone the repository
 git clone https://github.com/mondeep0123/Cortex-ARC.git
 cd Cortex-ARC
-
-# Install dependencies
 pip install -e .
-
-# Download ARC dataset
 python scripts/download_data.py --version arc1
-
-# Run evaluation
-python scripts/evaluate_phase3.py --arc --data data/arc-agi-1/training --n 50
 ```
-
-## 🏗️ Project Structure
-
-```
-Cortex-ARC/
-├── src/
-│   ├── brain/                    # Brain-inspired modules
-│   │   ├── visual/               # Visual Cortex
-│   │   │   ├── perception.py     # Object detection, background detection
-│   │   │   ├── reasoning.py      # Object matching, transformation detection
-│   │   │   ├── solver.py         # Phase 3 solver
-│   │   │   └── color_encoder.py  # Color understanding
-│   │   ├── prefrontal/           # Decision making (planned)
-│   │   ├── temporal/             # Sequence processing (planned)
-│   │   └── memory/               # Pattern memory (planned)
-│   ├── core/                     # Core abstractions
-│   │   ├── grid.py               # Grid representation
-│   │   ├── task.py               # Task structure
-│   │   └── primitives.py         # DSL primitives
-│   └── data/                     # Data loading
-├── scripts/
-│   ├── download_data.py          # Download ARC datasets
-│   └── evaluate_phase3.py        # Run evaluation
-├── CEREBRUM.md                   # Architecture design document
-└── configs/                      # Configuration files
-```
-
-## 🧪 What's Implemented (Phase 3)
-
-### ✅ Working
-- **Object Detection** — Connected components algorithm
-- **Background Detection** — Border-based heuristic
-- **Object Matching** — Hungarian algorithm for correspondence
-- **Transformation Detection** — Rotation (90°, 180°, 270°), Flip (H/V), Translation, Recolor
-- **Rule Extraction** — Find consistent rules across training examples
-- **Rule Application** — Apply detected rules to test input
-
-### ❌ Not Yet Implemented
-- Pattern filling
-- Object scaling/duplication
-- Conditional rules
-- Counting/arithmetic
-- Shape completion
-- ML-based pattern recognition
-
-## 📖 Architecture Document
-
-For the complete brain-inspired architecture design, see [CEREBRUM.md](CEREBRUM.md).
-
-## 🔬 Research Directions
-
-1. **Add More Transformations** — Scaling, pattern fill, conditional rules
-2. **ML Micro-Models** — Train small neural networks for specific task types
-3. **Hybrid Reasoning** — Combine neural perception with symbolic rule application
-4. **ARC-AGI 2** — Tackle the harder 2025 benchmark
-
-## 📚 References
-
-- [ARC Prize Official](https://arcprize.org)
-- [ARC-AGI Paper](https://arxiv.org/abs/1911.01547)
-- [Kaggle Competition](https://kaggle.com/competitions/arc-prize-2025)
-
-## 📝 License
-
-MIT License
 
 ---
 
-Built with 🧠 by [@mondeep0123](https://github.com/mondeep0123)
+## 📚 Documentation
+
+- [VISION.md](VISION.md) - Core philosophy: Learning cognitive abilities
+- [CEREBRUM.md](CEREBRUM.md) - Full architecture design
+
+---
+
+## 🎯 The Goal
+
+Build a system where:
+
+1. **Input** can be text, grids, code, images — anything
+2. **Cognitive experts** understand the fundamental structure
+3. **Experts communicate** to form understanding
+4. **Reasoning emerges** from composition
+5. **Generalization** is automatic because we learned ABILITIES, not PATTERNS
+
+---
+
+*"Intelligence is not about knowing the answers. It's about knowing how to think."*
