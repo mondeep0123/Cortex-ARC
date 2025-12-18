@@ -1,153 +1,112 @@
-# 🧠 ARC-AGI Solver
+# 🧠 Cortex-ARC
 
-> A research codebase for tackling the ARC-AGI benchmark (both ARC-AGI-1 and ARC-AGI-2)
+> A brain-inspired architecture for solving ARC-AGI puzzles (v1 & v2)
 
-## 🎯 Goal
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Beat the current state-of-the-art on ARC-AGI benchmarks through novel approaches combining:
-- Program synthesis
-- Test-time training
-- Refinement loops
-- Neural-symbolic reasoning
+## 🎯 What is This?
 
-## 📊 Current SOTA (December 2025)
+**Cortex-ARC** is a modular, brain-inspired AI system designed to solve the [ARC-AGI](https://arcprize.org) benchmark — a test of general intelligence through abstract visual reasoning puzzles.
 
-| Benchmark | Best Score | Our Target |
-|-----------|------------|------------|
-| ARC-AGI-1 | ~85%+ | 90%+ |
-| ARC-AGI-2 | 54.2% (GPT-5.2 Pro) | 60%+ |
-| ARC-AGI-2 (Kaggle) | 24% (NVARC) | 30%+ |
+### Architecture
 
-## 🏗️ Project Structure
+The system is organized like regions of the brain:
 
 ```
-arc-agi-solver/
-├── README.md
-├── requirements.txt
-├── setup.py
-├── configs/                    # Configuration files
-│   ├── base.yaml
-│   ├── arc1.yaml
-│   └── arc2.yaml
-├── data/                       # Dataset storage
-│   ├── arc-agi-1/
-│   │   ├── training/
-│   │   ├── evaluation/
-│   │   └── test/
-│   └── arc-agi-2/
-│       ├── training/
-│       ├── evaluation/
-│       └── test/
-├── src/                        # Source code
-│   ├── __init__.py
-│   ├── data/                   # Data loading & processing
-│   │   ├── __init__.py
-│   │   ├── loader.py
-│   │   ├── augmentation.py
-│   │   └── preprocessing.py
-│   ├── core/                   # Core abstractions
-│   │   ├── __init__.py
-│   │   ├── grid.py             # Grid representation
-│   │   ├── task.py             # Task abstraction
-│   │   ├── primitives.py       # DSL primitives
-│   │   └── transforms.py       # Grid transformations
-│   ├── solvers/                # Solver implementations
-│   │   ├── __init__.py
-│   │   ├── base.py             # Base solver interface
-│   │   ├── brute_force.py      # Baseline brute force
-│   │   ├── program_synthesis.py # Program synthesis
-│   │   ├── neural/             # Neural approaches
-│   │   │   ├── __init__.py
-│   │   │   ├── trm.py          # Tiny Recursive Model
-│   │   │   ├── diffusion.py    # Diffusion-based
-│   │   │   └── transformer.py  # Transformer-based
-│   │   ├── symbolic/           # Symbolic approaches
-│   │   │   ├── __init__.py
-│   │   │   ├── dsl.py          # Domain-specific language
-│   │   │   └── search.py       # Program search
-│   │   └── hybrid/             # Hybrid approaches
-│   │       ├── __init__.py
-│   │       ├── refinement.py   # Refinement loops
-│   │       └── neurosymbolic.py
-│   ├── evaluation/             # Evaluation & metrics
-│   │   ├── __init__.py
-│   │   ├── metrics.py
-│   │   ├── evaluator.py
-│   │   └── submission.py       # Kaggle submission
-│   └── visualization/          # Visualization tools
-│       ├── __init__.py
-│       ├── grid_viz.py
-│       ├── task_viz.py
-│       └── analysis.py
-├── notebooks/                  # Jupyter notebooks
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_baseline_experiments.ipynb
-│   └── 03_analysis.ipynb
-├── experiments/                # Experiment tracking
-│   ├── logs/
-│   └── checkpoints/
-├── tests/                      # Unit tests
-│   ├── __init__.py
-│   ├── test_grid.py
-│   ├── test_solvers.py
-│   └── test_evaluation.py
-└── scripts/                    # Utility scripts
-    ├── download_data.py
-    ├── train.py
-    ├── evaluate.py
-    └── submit.py
+┌─────────────────────────────────────────────────────────────┐
+│                      Cortex-ARC Brain                        │
+├──────────────────┬──────────────────┬───────────────────────┤
+│   Visual Cortex   │    Reasoning     │     Rule Engine       │
+│  (Perception)     │   (Matching)     │   (Transformation)    │
+├──────────────────┼──────────────────┼───────────────────────┤
+│ • Object Detection│ • Object Matcher │ • Translation         │
+│ • Background Det. │ • Comparison     │ • Rotation/Flip       │
+│ • Color Encoding  │ • Signatures     │ • Recolor             │
+└──────────────────┴──────────────────┴───────────────────────┘
 ```
+
+## 📊 Current Results
+
+| Test Suite | Accuracy | Notes |
+|------------|----------|-------|
+| Synthetic Tests | **100%** (9/9) | Translation, rotation, flip, recolor |
+| ARC-AGI-1 Rotation Puzzles | **100%** (5/5) | Pure rotation/flip tasks |
+| ARC-AGI-1 Overall | 2% | Only handles simple transformations so far |
 
 ## 🚀 Quick Start
 
 ```bash
-# Clone and setup
-cd arc-agi-solver
+# Clone the repository
+git clone https://github.com/mondeep0123/Cortex-ARC.git
+cd Cortex-ARC
+
+# Install dependencies
 pip install -e .
 
-# Download datasets
-python scripts/download_data.py --version both
+# Download ARC dataset
+python scripts/download_data.py --version arc1
 
-# Run baseline evaluation
-python scripts/evaluate.py --solver brute_force --dataset arc1
-
-# Train a model
-python scripts/train.py --config configs/arc2.yaml
+# Run evaluation
+python scripts/evaluate_phase3.py --arc --data data/arc-agi-1/training --n 50
 ```
 
-## 📚 Key Concepts
+## 🏗️ Project Structure
 
-### Grid Representation
-- 2D arrays of integers (0-9 representing colors)
-- Dimensions: 1x1 to 30x30
-- Colors: 0=black, 1=blue, 2=red, 3=green, 4=yellow, 5=grey, 6=magenta, 7=orange, 8=cyan, 9=maroon
-
-### Task Structure
-```json
-{
-  "train": [
-    {"input": [[...]], "output": [[...]]}
-  ],
-  "test": [
-    {"input": [[...]], "output": [[...]]}
-  ]
-}
+```
+Cortex-ARC/
+├── src/
+│   ├── brain/                    # Brain-inspired modules
+│   │   ├── visual/               # Visual Cortex
+│   │   │   ├── perception.py     # Object detection, background detection
+│   │   │   ├── reasoning.py      # Object matching, transformation detection
+│   │   │   ├── solver.py         # Phase 3 solver
+│   │   │   └── color_encoder.py  # Color understanding
+│   │   ├── prefrontal/           # Decision making (planned)
+│   │   ├── temporal/             # Sequence processing (planned)
+│   │   └── memory/               # Pattern memory (planned)
+│   ├── core/                     # Core abstractions
+│   │   ├── grid.py               # Grid representation
+│   │   ├── task.py               # Task structure
+│   │   └── primitives.py         # DSL primitives
+│   └── data/                     # Data loading
+├── scripts/
+│   ├── download_data.py          # Download ARC datasets
+│   └── evaluate_phase3.py        # Run evaluation
+├── CEREBRUM.md                   # Architecture design document
+└── configs/                      # Configuration files
 ```
 
-### Evaluation
-- Exact match required
-- 2 attempts per test case
-- Final score = % of correct predictions
+## 🧪 What's Implemented (Phase 3)
+
+### ✅ Working
+- **Object Detection** — Connected components algorithm
+- **Background Detection** — Border-based heuristic
+- **Object Matching** — Hungarian algorithm for correspondence
+- **Transformation Detection** — Rotation (90°, 180°, 270°), Flip (H/V), Translation, Recolor
+- **Rule Extraction** — Find consistent rules across training examples
+- **Rule Application** — Apply detected rules to test input
+
+### ❌ Not Yet Implemented
+- Pattern filling
+- Object scaling/duplication
+- Conditional rules
+- Counting/arithmetic
+- Shape completion
+- ML-based pattern recognition
+
+## 📖 Architecture Document
+
+For the complete brain-inspired architecture design, see [CEREBRUM.md](CEREBRUM.md).
 
 ## 🔬 Research Directions
 
-1. **Program Synthesis** - Generate executable programs from examples
-2. **Test-Time Training** - Adapt models on the fly for each task
-3. **Refinement Loops** - Iteratively improve predictions
-4. **Neurosymbolic** - Combine neural perception with symbolic reasoning
-5. **Compression-based** - Use information-theoretic approaches
+1. **Add More Transformations** — Scaling, pattern fill, conditional rules
+2. **ML Micro-Models** — Train small neural networks for specific task types
+3. **Hybrid Reasoning** — Combine neural perception with symbolic rule application
+4. **ARC-AGI 2** — Tackle the harder 2025 benchmark
 
-## 📖 References
+## 📚 References
 
 - [ARC Prize Official](https://arcprize.org)
 - [ARC-AGI Paper](https://arxiv.org/abs/1911.01547)
@@ -156,3 +115,7 @@ python scripts/train.py --config configs/arc2.yaml
 ## 📝 License
 
 MIT License
+
+---
+
+Built with 🧠 by [@mondeep0123](https://github.com/mondeep0123)
