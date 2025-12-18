@@ -145,13 +145,12 @@ class CortexModel(nn.Module):
     
     One model that learns all cognitive abilities through shared weights.
     
-    Training proceeds in phases:
-        Phase 1: Color tasks (learn color understanding)
-        Phase 2: Spatial tasks (learn spatial reasoning)
-        Phase 3: Pattern tasks (learn pattern recognition)
-        Phase 4: Full ARC tasks (combine all abilities)
+    Supports TWO modes:
+        1. Direct: input → output (for color tasks, simple transforms)
+        2. Few-shot: examples + input → output (for ARC puzzles)
     
-    But it's always the SAME model - abilities emerge, not separate modules.
+    The SAME encoder/decoder are used in both modes!
+    Color task training improves few-shot performance.
     """
     
     def __init__(
@@ -190,26 +189,89 @@ class CortexModel(nn.Module):
             embed_dim=embed_dim,
             num_colors=num_colors,
         )
+        
+        # === FEW-SHOT COMPONENTS ===
+        # Pattern extractor: combines input/output example embeddings
+        self.pattern_combiner = nn.Sequential(
+            nn.Linear(embed_dim * 2, embed_dim * 2),
+            nn.GELU(),
+            nn.Linear(embed_dim * 2, embed_dim),
+        )
+        
+        # Pattern conditioning: how pattern affects reasoning
+        self.pattern_proj = nn.Linear(embed_dim, embed_dim)
+    
+    def _extract_pattern(
+        self,
+        example_inputs: List[torch.Tensor],  # List of [H, W] grids
+        example_outputs: List[torch.Tensor],  # List of [H, W] grids
+    ) -> torch.Tensor:
+        """
+        Extract transformation pattern from examples.
+        
+        Returns:
+            Pattern embedding [1, embed_dim]
+        """
+        patterns = []
+        
+        for inp, out in zip(example_inputs, example_outputs):
+            # Encode each grid
+            inp_enc = self.encoder(inp.unsqueeze(0))  # [1, H1, W1, D]
+            out_enc = self.encoder(out.unsqueeze(0))  # [1, H2, W2, D]
+            
+            # Pool to single vectors
+            inp_vec = inp_enc.mean(dim=(1, 2))  # [1, D]
+            out_vec = out_enc.mean(dim=(1, 2))  # [1, D]
+            
+            # Combine to get pattern
+            combined = torch.cat([inp_vec, out_vec], dim=-1)  # [1, 2D]
+            pattern = self.pattern_combiner(combined)  # [1, D]
+            patterns.append(pattern)
+        
+        # Average patterns from all examples
+        pattern = torch.stack(patterns, dim=0).mean(dim=0)  # [1, D]
+        
+        return pattern
     
     def forward(
         self,
         input_grid: torch.Tensor,
         target_grid: Optional[torch.Tensor] = None,
+        example_inputs: Optional[List[torch.Tensor]] = None,
+        example_outputs: Optional[List[torch.Tensor]] = None,
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
         """
-        Forward pass.
+        Forward pass - supports both direct and few-shot modes.
         
         Args:
-            input_grid: Input grid [B, H, W]
-            target_grid: Target grid [B, H, W] (for training loss)
+            input_grid: Input grid [B, H, W] or [H, W]
+            target_grid: Target grid [B, H, W] or [H, W] (for training)
+            example_inputs: (Few-shot) List of example input grids
+            example_outputs: (Few-shot) List of example output grids
             
         Returns:
-            (output_logits, loss) where loss is None if no target
+            (output_logits, loss)
         """
+        # Handle single grid (add batch dim)
+        if input_grid.dim() == 2:
+            input_grid = input_grid.unsqueeze(0)
+        if target_grid is not None and target_grid.dim() == 2:
+            target_grid = target_grid.unsqueeze(0)
+        
         B, H, W = input_grid.shape
         
-        # Encode
+        # Encode input
         encoded = self.encoder(input_grid)  # [B, H, W, D]
+        
+        # === FEW-SHOT MODE ===
+        if example_inputs is not None and example_outputs is not None:
+            # Extract pattern from examples
+            pattern = self._extract_pattern(example_inputs, example_outputs)  # [1, D]
+            
+            # Add pattern conditioning to encoded input
+            pattern_cond = self.pattern_proj(pattern)  # [1, D]
+            pattern_cond = pattern_cond.view(1, 1, 1, -1)  # [1, 1, 1, D]
+            encoded = encoded + pattern_cond  # Add pattern context
         
         # Reason
         reasoned = self.reasoning(encoded, (H, W))  # [B, H, W, D]
@@ -227,18 +289,29 @@ class CortexModel(nn.Module):
         
         return logits, loss
     
-    def predict(self, input_grid: torch.Tensor) -> torch.Tensor:
+    def predict(
+        self, 
+        input_grid: torch.Tensor,
+        example_inputs: Optional[List[torch.Tensor]] = None,
+        example_outputs: Optional[List[torch.Tensor]] = None,
+    ) -> torch.Tensor:
         """
         Predict output grid.
         
         Args:
-            input_grid: Input grid [B, H, W]
+            input_grid: Input grid [B, H, W] or [H, W]
+            example_inputs: (Few-shot) List of example input grids
+            example_outputs: (Few-shot) List of example output grids
             
         Returns:
-            Predicted grid [B, H, W]
+            Predicted grid [B, H, W] or [H, W]
         """
-        logits, _ = self.forward(input_grid)
-        return logits.argmax(dim=-1)
+        squeeze = input_grid.dim() == 2
+        logits, _ = self.forward(input_grid, None, example_inputs, example_outputs)
+        pred = logits.argmax(dim=-1)
+        if squeeze:
+            pred = pred.squeeze(0)
+        return pred
     
     def count_parameters(self) -> int:
         """Count total trainable parameters."""
