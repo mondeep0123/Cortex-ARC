@@ -1,10 +1,11 @@
-"""ARC-AGI Solver - A research codebase for tackling ARC-AGI benchmarks."""
+"""Cortex-ARC: A unified reasoning architecture for ARC-AGI."""
 
-__version__ = "0.1.0"
-__author__ = "Your Name"
+__version__ = "0.2.0"
+__author__ = "Mondeep"
 
+# New unified architecture
+from . import cortex
+
+# Legacy (kept for data loading)
 from . import core
 from . import data
-from . import solvers
-from . import evaluation
-from . import visualization
