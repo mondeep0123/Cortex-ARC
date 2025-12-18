@@ -143,8 +143,8 @@ class ColorTaskGenerator:
             # Empty grid - just return identity
             return grid, grid.copy()
         
-        # Pick a random color to keep
-        keep_color = random.choice(colors_present)
+        # Always keep the SMALLEST color (deterministic - model can learn this)
+        keep_color = min(colors_present)
         
         # Output: only that color, rest is 0
         output = np.where(grid == keep_color, keep_color, 0)
@@ -190,8 +190,9 @@ class ColorTaskGenerator:
         if len(colors_present) < 2:
             return grid, grid.copy()
         
-        # Pick two colors to swap
-        c1, c2 = random.sample(colors_present, 2)
+        # Always swap the two SMALLEST colors (deterministic)
+        sorted_colors = sorted(colors_present)
+        c1, c2 = sorted_colors[0], sorted_colors[1]
         
         # Swap
         output = grid.copy()
