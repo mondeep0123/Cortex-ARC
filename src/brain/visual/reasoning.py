@@ -30,7 +30,8 @@ except ImportError:
 # ============================================================================
 
 class TransformType(Enum):
-    """Types of transformations we can detect in Phase 3."""
+    """Types of transformations we can detect."""
+    # Basic transforms (Phase 3)
     IDENTITY = auto()       # No change
     TRANSLATE = auto()      # Move objects
     ROTATE_90 = auto()      # 90° clockwise
@@ -41,6 +42,18 @@ class TransformType(Enum):
     RECOLOR = auto()        # Change colors
     DELETE = auto()         # Object removed
     CREATE = auto()         # Object created
+    
+    # Extended transforms (Phase 3.5)
+    SCALE_2X = auto()       # Scale up 2x
+    SCALE_3X = auto()       # Scale up 3x
+    SCALE_DOWN_2X = auto()  # Scale down 2x
+    CROP = auto()           # Crop to content
+    TILE_2X = auto()        # Tile 2x2
+    TILE_3X = auto()        # Tile 3x3
+    GRAVITY_DOWN = auto()   # Objects fall down
+    GRAVITY_LEFT = auto()   # Objects move left
+    TRANSPOSE = auto()      # Swap rows and columns
+    
     UNKNOWN = auto()        # Can't determine
 
 
@@ -335,6 +348,50 @@ def detect_grid_transform(input_grid: np.ndarray, output_grid: np.ndarray) -> Op
         flip_v = np.flipud(input_grid)
         if np.array_equal(flip_v, output_grid):
             return TransformType.FLIP_V
+        
+        # Check transpose
+        if H_in == W_in:  # Square grid
+            transposed = input_grid.T
+            if np.array_equal(transposed, output_grid):
+                return TransformType.TRANSPOSE
+    
+    # Check scaling (output is multiple of input)
+    if H_out == H_in * 2 and W_out == W_in * 2:
+        scaled_2x = np.repeat(np.repeat(input_grid, 2, axis=0), 2, axis=1)
+        if np.array_equal(scaled_2x, output_grid):
+            return TransformType.SCALE_2X
+    
+    if H_out == H_in * 3 and W_out == W_in * 3:
+        scaled_3x = np.repeat(np.repeat(input_grid, 3, axis=0), 3, axis=1)
+        if np.array_equal(scaled_3x, output_grid):
+            return TransformType.SCALE_3X
+    
+    # Check scale down (input is multiple of output)
+    if H_in == H_out * 2 and W_in == W_out * 2:
+        # Check if each 2x2 block maps to a single cell
+        scaled_down = input_grid[::2, ::2]
+        if np.array_equal(scaled_down, output_grid):
+            return TransformType.SCALE_DOWN_2X
+    
+    # Check tiling (output is input repeated)
+    if H_out == H_in * 2 and W_out == W_in * 2:
+        tiled = np.tile(input_grid, (2, 2))
+        if np.array_equal(tiled, output_grid):
+            return TransformType.TILE_2X
+    
+    if H_out == H_in * 3 and W_out == W_in * 3:
+        tiled = np.tile(input_grid, (3, 3))
+        if np.array_equal(tiled, output_grid):
+            return TransformType.TILE_3X
+    
+    # Check crop (output is a subgrid of input)
+    if H_out <= H_in and W_out <= W_in and (H_out < H_in or W_out < W_in):
+        # Try to find output as a subgrid
+        for r in range(H_in - H_out + 1):
+            for c in range(W_in - W_out + 1):
+                subgrid = input_grid[r:r+H_out, c:c+W_out]
+                if np.array_equal(subgrid, output_grid):
+                    return TransformType.CROP
     
     return None
 
@@ -482,6 +539,55 @@ class TransformationRule:
             for old_color, new_color in mapping.items():
                 result[grid == old_color] = new_color
             return result
+        
+        # Extended transforms
+        elif self.transform_type == TransformType.SCALE_2X:
+            return np.repeat(np.repeat(result, 2, axis=0), 2, axis=1)
+        
+        elif self.transform_type == TransformType.SCALE_3X:
+            return np.repeat(np.repeat(result, 3, axis=0), 3, axis=1)
+        
+        elif self.transform_type == TransformType.SCALE_DOWN_2X:
+            return result[::2, ::2]
+        
+        elif self.transform_type == TransformType.TILE_2X:
+            return np.tile(result, (2, 2))
+        
+        elif self.transform_type == TransformType.TILE_3X:
+            return np.tile(result, (3, 3))
+        
+        elif self.transform_type == TransformType.TRANSPOSE:
+            return result.T
+        
+        elif self.transform_type == TransformType.CROP:
+            # Crop to bounding box of non-zero content
+            bg_color = self.parameters.get("bg_color", 0)
+            non_bg = np.argwhere(result != bg_color)
+            if len(non_bg) == 0:
+                return result
+            min_r, min_c = non_bg.min(axis=0)
+            max_r, max_c = non_bg.max(axis=0)
+            return result[min_r:max_r+1, min_c:max_c+1]
+        
+        elif self.transform_type == TransformType.GRAVITY_DOWN:
+            # Move all non-zero cells down as far as possible
+            H, W = result.shape
+            new_grid = np.zeros_like(result)
+            for c in range(W):
+                col = result[:, c]
+                non_zero = col[col != 0]
+                new_grid[H-len(non_zero):, c] = non_zero
+            return new_grid
+        
+        elif self.transform_type == TransformType.GRAVITY_LEFT:
+            # Move all non-zero cells left as far as possible
+            H, W = result.shape
+            new_grid = np.zeros_like(result)
+            for r in range(H):
+                row = result[r, :]
+                non_zero = row[row != 0]
+                new_grid[r, :len(non_zero)] = non_zero
+            return new_grid
         
         return result
     

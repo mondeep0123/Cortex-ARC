@@ -121,6 +121,46 @@ SYNTHETIC_TESTS = [
         "test_out": [[0, 1, 0, 0], [0, 0, 0, 0]],  # Blue to 1, red clips (goes to col 4, out of bounds)
         "type": "translation"
     },
+    # Test 10: Scale 2x
+    {
+        "name": "scale_2x",
+        "train": [
+            ([[1, 2], [3, 0]], [[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 0, 0], [3, 3, 0, 0]]),
+        ],
+        "test_in": [[1, 0], [0, 2]],
+        "test_out": [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 2, 2], [0, 0, 2, 2]],
+        "type": "scale"
+    },
+    # Test 11: Tile 2x2
+    {
+        "name": "tile_2x",
+        "train": [
+            ([[1, 2], [3, 4]], [[1, 2, 1, 2], [3, 4, 3, 4], [1, 2, 1, 2], [3, 4, 3, 4]]),
+        ],
+        "test_in": [[5, 6], [7, 8]],
+        "test_out": [[5, 6, 5, 6], [7, 8, 7, 8], [5, 6, 5, 6], [7, 8, 7, 8]],
+        "type": "tile"
+    },
+    # Test 12: Transpose
+    {
+        "name": "transpose",
+        "train": [
+            ([[1, 2, 3], [4, 5, 6], [7, 8, 9]], [[1, 4, 7], [2, 5, 8], [3, 6, 9]]),
+        ],
+        "test_in": [[1, 0, 0], [0, 2, 0], [0, 0, 3]],
+        "test_out": [[1, 0, 0], [0, 2, 0], [0, 0, 3]],  # Diagonal is same when transposed
+        "type": "transpose"
+    },
+    # Test 13: Crop
+    {
+        "name": "crop",
+        "train": [
+            ([[0, 0, 0, 0], [0, 1, 2, 0], [0, 3, 4, 0], [0, 0, 0, 0]], [[1, 2], [3, 4]]),
+        ],
+        "test_in": [[0, 0, 0], [0, 5, 0], [0, 0, 0]],
+        "test_out": [[5]],
+        "type": "crop"
+    },
 ]
 
 
