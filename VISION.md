@@ -1,233 +1,301 @@
 # 🎯 Cortex-ARC Vision
 
-> Training Cognitive Abilities, Not Puzzle Solutions
+> One Model. All Abilities. Any Domain.
 
 ---
 
-## The Fundamental Insight
+## The Core Insight
 
-**We don't train models to recognize puzzles. We train models to THINK.**
+**The brain is not modular in the way software is modular.**
 
-```
-Human solving ARC puzzle:
+Brain "regions" are not separate programs. They're densely interconnected parts of ONE neural network. Abilities don't live in isolated modules — they EMERGE from the unified learning of the whole system.
 
-1. "I see colors" ← Color understanding
-2. "These colors group together" ← Pattern recognition  
-3. "This group is in the top-left" ← Spatial awareness
-4. "In the output, it moved to bottom-right" ← Relation understanding
-5. "So things move diagonally" ← Reasoning
-6. Apply to test input → Solution
-```
-
-Each step uses a **fundamental cognitive ability**, not puzzle-specific knowledge.
-
----
-
-## Cognitive Experts
-
-### What They Are
-
-Micro-models that learn **general cognitive skills**:
-
-| Expert | What It Learns |
-|--------|----------------|
-| **Color Expert** | Color similarity, contrast, grouping by color |
-| **Spatial Expert** | Position, distance, direction, boundaries |
-| **Pattern Expert** | Repetition, symmetry, sequences, hierarchy |
-| **Object Expert** | Entity detection, segmentation, properties |
-| **Relation Expert** | How things connect, transform, correspond |
-| **Memory Expert** | Store observations, retrieve relevant info |
-| **Reasoning Expert** | Combine insights, infer rules, apply logic |
-
-### What They Are NOT
+Our model follows this principle:
 
 ```
-❌ RotationDetector  ← This is a puzzle classifier
-❌ CropDetector      ← This is a puzzle classifier  
-❌ FlipDetector      ← This is a puzzle classifier
-```
-
-These fail because they only work for puzzles they were trained on.
-
----
-
-## How Experts Communicate
-
-```
-Input Grid
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│ Color Expert: "I see 3 distinct color groups"           │
-│                                                         │
-│ Spatial Expert: "Group A is top-left, B is center,     │
-│                  C is bottom-right"                     │
-│                                                         │
-│ Pattern Expert: "Groups are arranged diagonally"        │
-│                                                         │
-│ Object Expert: "Each group is a distinct object"        │
-└─────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────┐
-│ After comparing Input → Output:                         │
-│                                                         │
-│ Relation Expert: "Object A moved from (0,0) to (2,2)"  │
-│                  "Movement is +2 in both dimensions"    │
-│                                                         │
-│ Memory Expert: "Same pattern in all training examples"  │
-│                                                         │
-│ Reasoning Expert: "Rule: Move all objects by (+2,+2)"   │
-└─────────────────────────────────────────────────────────┘
-    │
-    ▼
-╔═════════════════════════════════════════════════════════╗
-║ APPLY TO TEST: Move each object by (+2,+2) → OUTPUT    ║
-╚═════════════════════════════════════════════════════════╝
+NOT:  ColorModule + SpatialModule + PatternModule → Stitch together
+YES:  ONE model → Train on diverse tasks → All abilities emerge
 ```
 
 ---
 
-## Why This Generalizes
+## What We're Building
 
-### Scenario: New Puzzle Type
+### A Unified Reasoning Core
 
-Imagine a puzzle that combines:
-- Rotation (spatial)
-- Color swap (color)
-- Tiling (pattern)
-
-**Puzzle-Specific Approach:**
 ```
-RotationDetector: "Not a pure rotation"
-CropDetector: "Not a crop"
-ColorSwapDetector: "Partially, but there's more"
-→ FAIL: Never seen this combination
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                  │
+│                    ONE SET OF WEIGHTS                            │
+│                                                                  │
+│   Learns through training:                                       │
+│                                                                  │
+│   ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐            │
+│   │  Color  │  │ Spatial │  │ Pattern │  │ Objects │            │
+│   │ Ability │  │ Ability │  │ Ability │  │ Ability │            │
+│   └────┬────┘  └────┬────┘  └────┬────┘  └────┬────┘            │
+│        │            │            │            │                  │
+│        └────────────┴────────────┴────────────┘                  │
+│                         │                                        │
+│                         ▼                                        │
+│              ┌─────────────────────┐                             │
+│              │  Relations Ability  │                             │
+│              └──────────┬──────────┘                             │
+│                         │                                        │
+│                         ▼                                        │
+│              ┌─────────────────────┐                             │
+│              │  Reasoning Ability  │                             │
+│              └─────────────────────┘                             │
+│                                                                  │
+│   All abilities are EMERGENT from the same weights.              │
+│   Not separate models. Not stitched together.                    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Cognitive Approach:**
+---
+
+## How Abilities Emerge
+
+### Brain Analogy
+
 ```
-Spatial Expert: "Elements rotated 90°"
-Color Expert: "Red became blue, blue became red"
-Pattern Expert: "The result is tiled 2x2"
-Reasoning Expert: "Apply rotation + color swap + tiling"
-→ SUCCESS: Composes known abilities
+Human brain:
+  - ~86 billion neurons
+  - ONE connected network
+  - Different regions specialize through DEVELOPMENT and LEARNING
+  - V4 "specializes" in color because it receives that input
+  - Parietal "specializes" in space because of its connectivity
+  - BUT they're all part of the SAME network
+```
+
+### Our Model
+
+```
+Cortex model:
+  - ~10M parameters (small, efficient)
+  - ONE connected network
+  - Different abilities emerge through TRAINING
+  - Color ability emerges from color-relevant patterns in data
+  - Spatial ability emerges from position-relevant patterns
+  - BUT they're all in the SAME weights
 ```
 
 ---
 
 ## Training Philosophy
 
-### How to Train Cognitive Experts
+### Not Curriculum of Separate Skills
 
-You don't train on ARC puzzles directly. You train on **cognitive tasks**.
-
-**Color Expert Training:**
-```python
-# Task: Which pixels have similar colors?
-# Task: What is the dominant color?
-# Task: How many color groups exist?
-# Task: Which colors are adjacent?
+```
+❌ WRONG:
+  1. Train Color Model
+  2. Train Spatial Model
+  3. Train Pattern Model
+  4. Somehow combine them
 ```
 
-**Spatial Expert Training:**
-```python
-# Task: Where is pixel X relative to pixel Y?
-# Task: What is the center of this group?
-# Task: Which direction does this pattern extend?
-# Task: What are the boundaries of this region?
+### Unified Learning
+
+```
+✅ RIGHT:
+  1. Train ONE model on ALL tasks
+  2. Tasks naturally require multiple abilities
+  3. Model learns to compose abilities automatically
+  4. Abilities share representations
 ```
 
-**Pattern Expert Training:**
-```python
-# Task: Is this pattern symmetric?
-# Task: What is the repeating unit?
-# Task: Is there a sequence here?
-# Task: How many times does this pattern repeat?
-```
+### Example: Learning from ARC
 
-Then **fine-tune on ARC** using the composed experts.
+```
+ARC Task: "Move the blue object right"
+
+To solve, model must:
+  • Understand "blue" (color ability)
+  • Understand "object" (segmentation ability)
+  • Understand "right" (spatial ability)
+  • Understand "move" (transformation ability)
+
+These abilities develop TOGETHER, not separately.
+```
 
 ---
 
-## Beyond Grids: Multi-Modal Thinking
+## Multi-Domain Generalization
 
-The same cognitive architecture applies to ANY input:
+### The Key: Preprocessing
 
-### Text Understanding
 ```
-Color Expert → Word categories (nouns, verbs)
-Spatial Expert → Sentence structure, word order
-Pattern Expert → Grammar, repetition
-Object Expert → Entities (people, places, things)
-Relation Expert → Who did what to whom
+Domain → Preprocessor → Grid → Model → Output
+
+The MODEL is domain-agnostic.
+Only PREPROCESSING is domain-specific.
 ```
 
-### Code Understanding
-```
-Color Expert → Token types (keywords, variables)
-Spatial Expert → Scope, indentation, blocks
-Pattern Expert → Loops, recursion, idioms
-Object Expert → Functions, classes, modules
-Relation Expert → Call graph, data flow
+### Examples
+
+**Chess:**
+```python
+def chess_to_grid(board):
+    # Convert 8x8 board to grid
+    # Pieces become colors 1-6
+    # Empty = 0
+    return grid
+
+# Training: (board_before, board_after) pairs
+# Model learns piece movements
 ```
 
-**Same experts. Different inputs. Same reasoning.**
+**Sudoku:**
+```python
+def sudoku_to_grid(puzzle):
+    # 9x9 grid, numbers 0-9
+    # Empty cells = 0
+    return grid
+
+# Training: (incomplete, complete) pairs
+# Model learns constraint satisfaction
+```
+
+**Any New Game:**
+```python
+def new_game_to_grid(state):
+    # Convert game state to grid
+    return grid
+
+# Just write the preprocessor!
+# Model's abilities transfer
+```
 
 ---
 
-## Implementation Strategy
+## Why One Model Works
 
-### Phase 1: Train Individual Experts
-```python
-color_expert = ColorExpert()
-color_expert.train(color_tasks)  # General color understanding
+### Shared Representations
 
-spatial_expert = SpatialExpert()
-spatial_expert.train(spatial_tasks)  # General spatial understanding
+```
+"Blue object in top-left"
+
+Color representation: [blue]
+Spatial representation: [top-left]
+Object representation: [contiguous region]
+
+These representations are SHARED across all tasks.
+Learning one task helps all other tasks.
 ```
 
-### Phase 2: Train Communication
-```python
-combined = CognitiveSystem([color_expert, spatial_expert, ...])
-combined.train_communication(multi_expert_tasks)
+### Compositionality
+
+```
+Task A: Learn "blue"
+Task B: Learn "top-left"
+Task C: Learn "move"
+
+New Task: "Move blue object from top-left to bottom-right"
+  → Compose existing abilities
+  → No retraining needed
 ```
 
-### Phase 3: Fine-tune on ARC
-```python
-combined.finetune(arc_puzzles)
+### Efficiency
+
+```
+Separate models:
+  ColorModel: 5M params
+  SpatialModel: 5M params
+  PatternModel: 5M params
+  ObjectModel: 5M params
+  TOTAL: 20M params + communication overhead
+
+Unified model:
+  CortexModel: 10M params
+  TOTAL: 10M params, naturally integrated
 ```
 
-### Phase 4: Generalize
-```python
-combined.evaluate(arc_agi_2)  # Never seen before
-combined.evaluate(text_reasoning)  # New modality
+---
+
+## Architecture Overview
+
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CORTEX MODEL                              │
+│                                                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ INPUT ENCODING                                              │ │
+│  │   Grid → Learned embeddings                                 │ │
+│  │   Position encoding                                         │ │
+│  │   Color encoding (learned, not hardcoded)                   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ REASONING CORE                                              │ │
+│  │   Transformer/Attention layers                              │ │
+│  │   Learns all abilities in shared weights                    │ │
+│  │   Recursive: Can refine answer over multiple passes         │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              │                                   │
+│                              ▼                                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ OUTPUT DECODING                                             │ │
+│  │   Embeddings → Grid                                         │ │
+│  │   Autoregressive or direct prediction                       │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Comparison
+
+| Aspect | Modular (Separate) | Unified (Ours) |
+|--------|-------------------|----------------|
+| Architecture | Multiple models | One model |
+| Communication | Explicit, complex | Implicit, natural |
+| Training | Separate, then combine | End-to-end |
+| Representations | Separate per module | Shared |
+| Compositionality | Hard | Natural |
+| Proven | ❌ No winner | ✅ TRM shows it works |
+
+---
+
+## Roadmap
+
+### Phase 1: Core Model
+- Design unified architecture
+- Implement training loop
+- Train on ARC-AGI
+- Validate: 40%+ ARC-AGI-1
+
+### Phase 2: Multi-Domain
+- Chess, Sudoku, Minesweeper preprocessors
+- Validate transfer learning
+- Fine-tune if needed
+
+### Phase 3: Multi-Modal
+- Image encoder → Unified space
+- Text encoder → Unified space
+- Same reasoning core
 
 ---
 
 ## Success Criteria
 
-| Test | Target | Meaning |
-|------|--------|---------|
-| ARC-AGI-1 | >40% | Basic reasoning |
-| ARC-AGI-2 (unseen) | >25% | True generalization |
-| New puzzle types | >15% | Composition works |
-| Text problems | Works | Multi-modal |
-| Code problems | Works | Multi-modal |
-
-**Ultimate test:** A puzzle type NO HUMAN has ever solved.
-If our system can reason about it, we've built something real.
+```
+1. ONE model handles ALL ARC tasks
+2. Same model transfers to Chess/Sudoku via preprocessing
+3. Abilities compose (novel combinations work)
+4. Generalizes to ARC-AGI-2 (never seen during training)
+```
 
 ---
 
 ## Summary
 
-1. We train **cognitive abilities**, not puzzle classifiers
-2. Experts learn **general skills** (color, spatial, pattern, etc.)
-3. Experts **communicate** through learned representations
-4. Intelligence **emerges** from composition
-5. **Generalization** is automatic because abilities are fundamental
+We're not building a committee of experts.
+We're not stitching modules together.
+We're building ONE brain that learns to reason.
 
-This is not about ARC-AGI.
-This is about building machines that think.
+Different abilities emerge naturally from unified training.
+That's how real brains work.
+That's how our model works.
