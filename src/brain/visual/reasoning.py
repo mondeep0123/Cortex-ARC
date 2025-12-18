@@ -54,6 +54,7 @@ class TransformType(Enum):
     GRAVITY_LEFT = auto()   # Objects move left
     TRANSPOSE = auto()      # Swap rows and columns
     EXTRACT_FRAME = auto()  # Extract content inside a color frame
+    EXTRACT_COLOR_REGION = auto()  # Extract bbox of specific color region
     
     UNKNOWN = auto()        # Can't determine
 
@@ -413,6 +414,27 @@ def detect_grid_transform(input_grid: np.ndarray, output_grid: np.ndarray) -> Op
                 if inside.shape == output_grid.shape and np.array_equal(inside, output_grid):
                     return TransformType.EXTRACT_FRAME
     
+    # Check EXTRACT_COLOR_REGION: bbox of a specific color matches output
+    if H_out < H_in or W_out < W_in:
+        out_colors = set(output_grid.flatten()) - {0}
+        in_colors = set(input_grid.flatten()) - {0}
+        
+        # Check if output has a unique color not dominant in input
+        for target_color in out_colors:
+            if target_color == 0:
+                continue
+            mask = (input_grid == target_color)
+            coords = np.argwhere(mask)
+            if len(coords) == 0:
+                continue
+            
+            min_r, min_c = coords.min(axis=0)
+            max_r, max_c = coords.max(axis=0)
+            region = input_grid[min_r:max_r+1, min_c:max_c+1]
+            
+            if region.shape == output_grid.shape and np.array_equal(region, output_grid):
+                return TransformType.EXTRACT_COLOR_REGION
+    
     # Check crop (output is a subgrid of input)
     if H_out <= H_in and W_out <= W_in and (H_out < H_in or W_out < W_in):
         # Try to find output as a subgrid
@@ -501,6 +523,24 @@ def detect_grid_transform_with_params(
                 
                 if top_row.all() and bot_row.all() and left_col.all() and right_col.all():
                     return TransformType.EXTRACT_FRAME, {"frame_color": int(c)}
+        
+        # For EXTRACT_COLOR_REGION, find which color determines the region
+        if simple_transform == TransformType.EXTRACT_COLOR_REGION:
+            out_colors = set(output_grid.flatten()) - {0}
+            for target_color in out_colors:
+                if target_color == 0:
+                    continue
+                mask = (input_grid == target_color)
+                coords = np.argwhere(mask)
+                if len(coords) == 0:
+                    continue
+                
+                min_r, min_c = coords.min(axis=0)
+                max_r, max_c = coords.max(axis=0)
+                region = input_grid[min_r:max_r+1, min_c:max_c+1]
+                
+                if region.shape == output_grid.shape and np.array_equal(region, output_grid):
+                    return TransformType.EXTRACT_COLOR_REGION, {"target_color": int(target_color)}
         
         # Other transforms don't need params
         return simple_transform, {}
@@ -730,6 +770,40 @@ class TransformationRule:
                     return result[min_r+1:max_r, min_c+1:max_c]
             
             return result
+        
+        elif self.transform_type == TransformType.EXTRACT_COLOR_REGION:
+            # Find bounding box of target color region
+            target_color = self.parameters.get("target_color")
+            
+            # If we have a specific target color, use it
+            if target_color is not None:
+                mask = (result == target_color)
+                coords = np.argwhere(mask)
+                if len(coords) > 0:
+                    min_r, min_c = coords.min(axis=0)
+                    max_r, max_c = coords.max(axis=0)
+                    return result[min_r:max_r+1, min_c:max_c+1]
+            
+            # Fallback: try each non-zero color and return smallest valid region
+            best_region = result
+            best_size = result.shape[0] * result.shape[1]
+            
+            for target_color in set(result.flatten()) - {0}:
+                mask = (result == target_color)
+                coords = np.argwhere(mask)
+                if len(coords) == 0:
+                    continue
+                
+                min_r, min_c = coords.min(axis=0)
+                max_r, max_c = coords.max(axis=0)
+                region = result[min_r:max_r+1, min_c:max_c+1]
+                
+                region_size = region.shape[0] * region.shape[1]
+                if region_size < best_size:
+                    best_region = region
+                    best_size = region_size
+            
+            return best_region
         
         elif self.transform_type == TransformType.GRAVITY_DOWN:
             # Move all non-zero cells down as far as possible
