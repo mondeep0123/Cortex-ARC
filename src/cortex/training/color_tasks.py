@@ -56,6 +56,20 @@ class ColorTaskGenerator:
                 'increment_colors',   # Each color +1 (mod 10)
                 'decrement_colors',   # Each color -1 (mod 10)
             ],
+            # NEW: Scaling and spatial tasks
+            'scale': [
+                'scale_2x',           # Double size
+                'scale_3x',           # Triple size
+                'shrink_half',        # Shrink by half (if even dims)
+            ],
+            'spatial': [
+                'flip_horizontal',    # Mirror left-right
+                'flip_vertical',      # Mirror top-bottom
+                'rotate_90',          # Rotate 90 degrees clockwise
+                'rotate_180',         # Rotate 180 degrees
+                'rotate_270',         # Rotate 270 degrees clockwise
+                'transpose',          # Swap rows and columns
+            ],
         }
     
     def generate_batch(
@@ -93,19 +107,23 @@ class ColorTaskGenerator:
             inputs.append(inp)
             targets.append(tgt)
         
-        # Pad to same size
-        max_h = max(i.shape[0] for i in inputs)
-        max_w = max(i.shape[1] for i in inputs)
+        # Pad to same size (considering both inputs AND targets for scaling)
+        all_grids = inputs + targets
+        max_h = max(g.shape[0] for g in all_grids)
+        max_w = max(g.shape[1] for g in all_grids)
         
         padded_inputs = []
         padded_targets = []
         
         for inp, tgt in zip(inputs, targets):
-            h, w = inp.shape
-            pad_h = max_h - h
-            pad_w = max_w - w
-            
+            # Pad input
+            pad_h = max_h - inp.shape[0]
+            pad_w = max_w - inp.shape[1]
             inp_padded = np.pad(inp, ((0, pad_h), (0, pad_w)), constant_values=0)
+            
+            # Pad target
+            pad_h = max_h - tgt.shape[0]
+            pad_w = max_w - tgt.shape[1]
             tgt_padded = np.pad(tgt, ((0, pad_h), (0, pad_w)), constant_values=0)
             
             padded_inputs.append(inp_padded)
@@ -158,6 +176,28 @@ class ColorTaskGenerator:
             return self._task_shift_colors(1)
         elif variation == 'decrement_colors':
             return self._task_shift_colors(-1)
+        
+        # Scale variations
+        elif variation == 'scale_2x':
+            return self._task_scale(2)
+        elif variation == 'scale_3x':
+            return self._task_scale(3)
+        elif variation == 'shrink_half':
+            return self._task_shrink(2)
+        
+        # Spatial variations
+        elif variation == 'flip_horizontal':
+            return self._task_flip('horizontal')
+        elif variation == 'flip_vertical':
+            return self._task_flip('vertical')
+        elif variation == 'rotate_90':
+            return self._task_rotate(1)
+        elif variation == 'rotate_180':
+            return self._task_rotate(2)
+        elif variation == 'rotate_270':
+            return self._task_rotate(3)
+        elif variation == 'transpose':
+            return self._task_transpose()
         
         else:
             raise ValueError(f"Unknown variation: {variation}")
@@ -312,6 +352,71 @@ class ColorTaskGenerator:
             new_color = ((color - 1 + shift) % 9) + 1  # Wrap 1-9
             output[grid == color] = new_color
         
+        return grid, output
+    
+    # ============= SCALING TASKS =============
+    
+    def _task_scale(self, factor: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Scale up grid by factor (2x, 3x, etc.)."""
+        # Use smaller grids for scaling up
+        h = random.randint(2, 5)
+        w = random.randint(2, 5)
+        
+        grid = np.zeros((h, w), dtype=np.int64)
+        num_pixels = int(h * w * 0.6)
+        for _ in range(num_pixels):
+            r = random.randint(0, h - 1)
+            c = random.randint(0, w - 1)
+            color = random.randint(1, self.num_colors - 1)
+            grid[r, c] = color
+        
+        # Scale up by repeating pixels
+        output = np.repeat(np.repeat(grid, factor, axis=0), factor, axis=1)
+        
+        return grid, output
+    
+    def _task_shrink(self, factor: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Shrink grid by factor (take every Nth pixel)."""
+        # Create grid with even dimensions
+        h = random.randint(2, 4) * factor
+        w = random.randint(2, 4) * factor
+        
+        grid = np.zeros((h, w), dtype=np.int64)
+        num_pixels = int(h * w * 0.6)
+        for _ in range(num_pixels):
+            r = random.randint(0, h - 1)
+            c = random.randint(0, w - 1)
+            color = random.randint(1, self.num_colors - 1)
+            grid[r, c] = color
+        
+        # Shrink by taking top-left of each block
+        output = grid[::factor, ::factor]
+        
+        return grid, output
+    
+    # ============= SPATIAL TASKS =============
+    
+    def _task_flip(self, direction: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Flip grid horizontally or vertically."""
+        grid = self._random_grid()
+        
+        if direction == 'horizontal':
+            output = np.fliplr(grid)
+        else:  # vertical
+            output = np.flipud(grid)
+        
+        return grid, output
+    
+    def _task_rotate(self, k: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Rotate grid 90*k degrees clockwise."""
+        grid = self._random_grid()
+        output = np.rot90(grid, k=-k)  # Negative for clockwise
+        return grid, output
+    
+    def _task_transpose(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Transpose grid (swap rows and columns)."""
+        grid = self._random_grid()
+        output = grid.T
         return grid, output
 
 
