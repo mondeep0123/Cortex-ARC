@@ -1,39 +1,65 @@
 """
 Mechanistic Interpretability for CortexModel
 
-See what the model ACTUALLY does, not what it would SAY it does.
-
-Methods:
-1. Attention visualization - Where does model look?
-2. Activation analysis - What features are active?
-3. Attribution - What input affects output?
+Human-readable explanations of what the model ACTUALLY does.
+Logs all puzzle interpretations to file for analysis.
 """
 
 import torch
 import torch.nn as nn
 import numpy as np
 from typing import Dict, List, Tuple, Optional
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+from pathlib import Path
+from datetime import datetime
+import json
 
 
 class ModelInterpreter:
     """
     Interprets CortexModel during inference.
     
-    Captures internal computations to understand reasoning.
+    Provides human-readable explanations of model behavior.
     """
     
-    def __init__(self, model):
+    def __init__(self, model, log_dir: str = "logs/interpretability"):
         self.model = model
         self.attention_maps = []
         self.activations = {}
         self.hooks = []
         
+        # Logging
+        self.log_dir = Path(log_dir)
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+        self.current_log = []
+        self.log_file = None
+        
+    def start_logging(self, session_name: str = None):
+        """Start a new logging session."""
+        if session_name is None:
+            session_name = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        self.log_file = self.log_dir / f"session_{session_name}.txt"
+        self.current_log = []
+        
+        # Write header
+        with open(self.log_file, 'w', encoding='utf-8') as f:
+            f.write("=" * 70 + "\n")
+            f.write(f"  MODEL INTERPRETATION LOG\n")
+            f.write(f"  Session: {session_name}\n")
+            f.write(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write("=" * 70 + "\n\n")
+        
+        print(f"📝 Logging to: {self.log_file}")
+    
+    def _log(self, text: str):
+        """Add text to current log."""
+        self.current_log.append(text)
+        if self.log_file:
+            with open(self.log_file, 'a', encoding='utf-8') as f:
+                f.write(text + "\n")
+    
     def _register_hooks(self):
         """Register forward hooks to capture internal states."""
-        
-        # Clear previous hooks
         for hook in self.hooks:
             hook.remove()
         self.hooks = []
@@ -44,14 +70,12 @@ class ModelInterpreter:
         for i, layer in enumerate(self.model.reasoning.layers):
             def make_attn_hook(layer_idx):
                 def hook(module, input, output):
-                    # output[1] is attention weights
                     if isinstance(output, tuple) and len(output) > 1:
                         self.attention_maps.append({
                             'layer': layer_idx,
                             'weights': output[1].detach().cpu() if output[1] is not None else None
                         })
                 return hook
-            
             h = layer.attn.register_forward_hook(make_attn_hook(i))
             self.hooks.append(h)
         
@@ -59,12 +83,6 @@ class ModelInterpreter:
         def color_hook(module, input, output):
             self.activations['color_embed'] = output.detach().cpu()
         h = self.model.encoder.color_embed.register_forward_hook(color_hook)
-        self.hooks.append(h)
-        
-        # Hook final reasoning output
-        def reasoning_hook(module, input, output):
-            self.activations['reasoning_out'] = output.detach().cpu()
-        h = self.model.reasoning.register_forward_hook(reasoning_hook)
         self.hooks.append(h)
     
     def _remove_hooks(self):
@@ -78,18 +96,9 @@ class ModelInterpreter:
         input_grid: torch.Tensor,
         example_inputs: Optional[List[torch.Tensor]] = None,
         example_outputs: Optional[List[torch.Tensor]] = None,
+        puzzle_id: str = None,
     ) -> Dict:
-        """
-        Run inference with interpretation.
-        
-        Args:
-            input_grid: Input grid [H, W]
-            example_inputs: Optional few-shot examples
-            example_outputs: Optional few-shot examples
-            
-        Returns:
-            Dict with prediction and interpretation data
-        """
+        """Run inference with interpretation."""
         self._register_hooks()
         
         try:
@@ -102,6 +111,7 @@ class ModelInterpreter:
                 )
             
             result = {
+                'puzzle_id': puzzle_id or 'unknown',
                 'input': input_grid.cpu().numpy() if isinstance(input_grid, torch.Tensor) else input_grid,
                 'prediction': prediction.cpu().numpy() if isinstance(prediction, torch.Tensor) else prediction,
                 'attention_maps': self.attention_maps,
@@ -113,147 +123,160 @@ class ModelInterpreter:
         finally:
             self._remove_hooks()
     
-    def visualize_attention(
-        self, 
-        result: Dict, 
-        layer: int = 0,
-        save_path: Optional[str] = None
-    ):
+    def explain_human(self, result: Dict, verbose: bool = True) -> str:
         """
-        Visualize attention patterns.
+        Generate a HUMAN-READABLE explanation.
         
-        Shows which positions the model relates to which.
-        """
-        if not result['attention_maps']:
-            print("No attention data captured (model may not return attention weights)")
-            return
-        
-        attn_data = result['attention_maps'][layer]
-        weights = attn_data['weights']
-        
-        if weights is None:
-            print("Attention weights not available")
-            return
-        
-        # weights: [batch, heads, seq_len, seq_len]
-        # Average over heads
-        avg_attn = weights[0].mean(dim=0).numpy()  # [seq_len, seq_len]
-        
-        plt.figure(figsize=(10, 8))
-        plt.imshow(avg_attn, cmap='hot')
-        plt.colorbar(label='Attention weight')
-        plt.xlabel('Key position')
-        plt.ylabel('Query position')
-        plt.title(f'Layer {layer} Attention Pattern')
-        
-        if save_path:
-            plt.savefig(save_path)
-        plt.show()
-    
-    def visualize_input_output(self, result: Dict, save_path: Optional[str] = None):
-        """Visualize input and predicted output side by side."""
-        
-        inp = result['input']
-        pred = result['prediction']
-        
-        # ARC color palette
-        colors = [
-            '#000000',  # 0: black
-            '#0074D9',  # 1: blue
-            '#FF4136',  # 2: red
-            '#2ECC40',  # 3: green
-            '#FFDC00',  # 4: yellow
-            '#AAAAAA',  # 5: gray
-            '#F012BE',  # 6: magenta
-            '#FF851B',  # 7: orange
-            '#7FDBFF',  # 8: cyan
-            '#870C25',  # 9: brown
-        ]
-        cmap = mcolors.ListedColormap(colors)
-        
-        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-        
-        axes[0].imshow(inp, cmap=cmap, vmin=0, vmax=9)
-        axes[0].set_title('Input')
-        axes[0].axis('off')
-        
-        axes[1].imshow(pred, cmap=cmap, vmin=0, vmax=9)
-        axes[1].set_title('Prediction')
-        axes[1].axis('off')
-        
-        plt.tight_layout()
-        if save_path:
-            plt.savefig(save_path)
-        plt.show()
-    
-    def get_saliency(self, input_grid: torch.Tensor, target_pos: Tuple[int, int]) -> np.ndarray:
-        """
-        Compute saliency: which input pixels affect output at target_pos.
-        
-        Uses gradient-based attribution.
-        """
-        input_grid = input_grid.clone().requires_grad_(True).float()
-        
-        self.model.eval()
-        
-        # Forward pass
-        logits, _ = self.model(input_grid.unsqueeze(0).long())
-        
-        # Get logit at target position
-        target_logit = logits[0, target_pos[0], target_pos[1], :].sum()
-        
-        # Backward to get gradients
-        target_logit.backward()
-        
-        # Gradient magnitude as saliency
-        saliency = input_grid.grad.abs().numpy()
-        
-        return saliency
-    
-    def explain_prediction(self, result: Dict) -> str:
-        """
-        Generate a text explanation of what we observed.
-        
-        This is NOT what model "thinks" - it's our interpretation
-        of observed internal states.
+        No jargon, just plain English describing what happened.
         """
         lines = []
-        lines.append("=== Interpretation Report ===\n")
+        puzzle_id = result.get('puzzle_id', 'Unknown')
         
         inp = result['input']
         pred = result['prediction']
         
-        # Size analysis
-        lines.append(f"Input size: {inp.shape}")
-        lines.append(f"Output size: {pred.shape}")
+        # Header
+        lines.append(f"\n{'─' * 50}")
+        lines.append(f"🧩 PUZZLE: {puzzle_id}")
+        lines.append(f"{'─' * 50}")
         
-        # Color analysis
+        # Size observation
+        lines.append(f"\n📐 SIZE:")
+        lines.append(f"   Grid is {inp.shape[0]} rows × {inp.shape[1]} columns")
+        if inp.shape != pred.shape:
+            lines.append(f"   ⚠️  Output size changed to {pred.shape[0]} × {pred.shape[1]}")
+        else:
+            lines.append(f"   Output is same size")
+        
+        # Color observation
         inp_colors = set(inp.flatten()) - {0}
         out_colors = set(pred.flatten()) - {0}
         
-        lines.append(f"\nInput colors: {sorted(inp_colors)}")
-        lines.append(f"Output colors: {sorted(out_colors)}")
+        color_names = {
+            0: 'black (background)',
+            1: 'blue', 2: 'red', 3: 'green', 4: 'yellow',
+            5: 'gray', 6: 'magenta', 7: 'orange', 8: 'cyan', 9: 'brown'
+        }
         
-        # Changes
+        lines.append(f"\n🎨 COLORS:")
+        inp_color_str = ', '.join([color_names.get(c, str(c)) for c in sorted(inp_colors)])
+        out_color_str = ', '.join([color_names.get(c, str(c)) for c in sorted(out_colors)])
+        lines.append(f"   Input has: {inp_color_str or 'only background'}")
+        lines.append(f"   Output has: {out_color_str or 'only background'}")
+        
+        # Color changes
+        added_colors = out_colors - inp_colors
+        removed_colors = inp_colors - out_colors
+        if added_colors:
+            lines.append(f"   ➕ New colors: {', '.join([color_names.get(c, str(c)) for c in added_colors])}")
+        if removed_colors:
+            lines.append(f"   ➖ Removed colors: {', '.join([color_names.get(c, str(c)) for c in removed_colors])}")
+        
+        # What changed
+        lines.append(f"\n🔄 WHAT CHANGED:")
         if np.array_equal(inp, pred):
-            lines.append("\nTransformation: IDENTITY (no change)")
+            lines.append(f"   ✅ Nothing! Model output exactly matches input.")
+            lines.append(f"   This suggests an IDENTITY transformation.")
         else:
             diff = inp != pred
-            changed_count = diff.sum()
-            lines.append(f"\nPixels changed: {changed_count} / {inp.size}")
+            changed = diff.sum()
+            total = inp.size
+            percent = 100 * changed / total
+            
+            if percent < 10:
+                lines.append(f"   🔹 Minor changes: {changed}/{total} pixels ({percent:.1f}%)")
+            elif percent < 50:
+                lines.append(f"   🔸 Moderate changes: {changed}/{total} pixels ({percent:.1f}%)")
+            else:
+                lines.append(f"   🔶 Major changes: {changed}/{total} pixels ({percent:.1f}%)")
+            
+            # Try to identify the transformation type
+            if len(out_colors) == 1:
+                dom_color = list(out_colors)[0]
+                lines.append(f"   Appears to be FILLING with {color_names.get(dom_color, str(dom_color))}")
+            elif len(out_colors) < len(inp_colors):
+                lines.append(f"   Appears to be COLOR FILTERING (reduced colors)")
+            elif out_colors != inp_colors:
+                lines.append(f"   Appears to be COLOR TRANSFORMATION (colors changed)")
+            else:
+                lines.append(f"   Appears to be SPATIAL transformation (colors same, positions changed)")
         
-        # Attention analysis
+        # Model attention (simplified)
+        lines.append(f"\n🧠 MODEL ATTENTION:")
         if result['attention_maps']:
-            lines.append(f"\nAttention layers captured: {len(result['attention_maps'])}")
+            # Analyze attention focus
+            all_max = []
+            all_mean = []
             for attn in result['attention_maps']:
                 if attn['weights'] is not None:
-                    # Check if attention is focused or spread
-                    weights = attn['weights'][0].mean(dim=0).numpy()
-                    max_attn = weights.max()
-                    mean_attn = weights.mean()
-                    lines.append(f"  Layer {attn['layer']}: max={max_attn:.3f}, mean={mean_attn:.3f}")
+                    w = attn['weights'][0].mean(dim=0).numpy()
+                    all_max.append(w.max())
+                    all_mean.append(w.mean())
+            
+            if all_max:
+                avg_max = np.mean(all_max)
+                avg_mean = np.mean(all_mean)
+                focus_ratio = avg_max / avg_mean if avg_mean > 0 else 1
+                
+                if focus_ratio > 2:
+                    lines.append(f"   🎯 FOCUSED attention - model found specific important areas")
+                elif focus_ratio > 1.5:
+                    lines.append(f"   🔍 MODERATE focus - model found some patterns")
+                else:
+                    lines.append(f"   📊 SPREAD attention - model looked at everything equally")
+        else:
+            lines.append(f"   (Attention data not captured)")
         
-        return "\n".join(lines)
+        # Confidence assessment
+        lines.append(f"\n📊 ASSESSMENT:")
+        if np.array_equal(inp, pred) and len(inp_colors) > 0:
+            lines.append(f"   Model predicts: Keep input unchanged")
+        elif len(out_colors) == 1:
+            lines.append(f"   Model predicts: Fill with single color")
+        else:
+            lines.append(f"   Model predicts: Transform colors/positions")
+        
+        lines.append("")
+        
+        explanation = "\n".join(lines)
+        
+        # Log it
+        self._log(explanation)
+        
+        # Print if verbose
+        if verbose:
+            print(explanation)
+        
+        return explanation
+    
+    def finish_logging(self):
+        """Finish the logging session with summary."""
+        if self.log_file:
+            with open(self.log_file, 'a', encoding='utf-8') as f:
+                f.write("\n" + "=" * 70 + "\n")
+                f.write(f"  Session ended: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write(f"  Total puzzles interpreted: {len(self.current_log)}\n")
+                f.write("=" * 70 + "\n")
+            
+            print(f"📁 Log saved to: {self.log_file}")
+    
+    def interpret_and_explain(
+        self,
+        input_grid: torch.Tensor,
+        puzzle_id: str = None,
+        example_inputs: Optional[List[torch.Tensor]] = None,
+        example_outputs: Optional[List[torch.Tensor]] = None,
+        verbose: bool = True,
+    ) -> Tuple[np.ndarray, str]:
+        """
+        Full pipeline: interpret and explain in human terms.
+        
+        Returns:
+            (prediction, explanation)
+        """
+        result = self.interpret(input_grid, example_inputs, example_outputs, puzzle_id)
+        explanation = self.explain_human(result, verbose=verbose)
+        return result['prediction'], explanation
 
 
 # Quick test
@@ -262,16 +285,24 @@ if __name__ == "__main__":
     sys.path.insert(0, '.')
     from src.cortex.model import CortexModel
     
-    print("Testing ModelInterpreter...")
+    print("Testing Human-Readable Interpretability")
+    print("=" * 50)
     
     model = CortexModel(embed_dim=128, num_layers=4)
     interpreter = ModelInterpreter(model)
     
-    # Test input
-    input_grid = torch.randint(0, 10, (5, 5))
+    # Start logging
+    interpreter.start_logging("test_session")
     
-    # Interpret
-    result = interpreter.interpret(input_grid)
+    # Test on a few puzzles
+    for i in range(3):
+        input_grid = torch.randint(0, 10, (5, 5))
+        pred, explanation = interpreter.interpret_and_explain(
+            input_grid, 
+            puzzle_id=f"test_puzzle_{i+1}"
+        )
     
-    print(interpreter.explain_prediction(result))
-    print("\n✓ ModelInterpreter working!")
+    # Finish logging
+    interpreter.finish_logging()
+    
+    print("\n✓ Human-readable interpretability working!")
