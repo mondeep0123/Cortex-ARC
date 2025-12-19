@@ -1,16 +1,16 @@
 """
-Color Training Tasks
+Color Training Tasks - ENHANCED VERSION
 
-Generates synthetic tasks to teach the model color understanding:
-1. Color Identity: Given input, output same color pattern
-2. Color Counting: Identify distinct color regions
-3. Color Grouping: Group same-colored pixels
-4. Dominant Color: Find most common color
-5. Color Masking: Isolate specific colors
+Generates diverse training tasks with many parameter variations.
+This teaches the model the CONCEPT, not just specific rules.
 
-These tasks are simple but fundamental - the model must first
-understand what "color" means before it can reason about
-color-based patterns in ARC puzzles.
+Task Categories:
+1. Identity - Copy exactly
+2. Mask - Keep color by various criteria
+3. Fill - Fill with color by various criteria  
+4. Recolor - Transform colors by various rules
+
+Each category has MULTIPLE variations to learn the general concept.
 """
 
 import torch
@@ -21,21 +21,48 @@ import random
 
 class ColorTaskGenerator:
     """
-    Generates training tasks for color understanding.
+    Enhanced task generator with diverse parameter variations.
     
-    Each task type teaches a specific aspect of color perception.
-    All tasks use the same model - abilities accumulate.
+    Instead of one rule per task, generates many variations
+    so model learns the CONCEPT, not specific rules.
     """
     
     def __init__(self, num_colors: int = 10, max_size: int = 10, min_size: int = 3):
         self.num_colors = num_colors
         self.max_size = max_size
         self.min_size = min_size
+        
+        # All available task variations
+        self.task_variations = {
+            'identity': ['identity'],
+            'mask_color': [
+                'mask_smallest',      # Keep smallest color value
+                'mask_largest',       # Keep largest color value
+                'mask_most_frequent', # Keep most common color
+                'mask_least_frequent',# Keep rarest color
+                'mask_random',        # Keep random color (model must learn from examples)
+            ],
+            'find_dominant': [
+                'fill_most_frequent', # Fill with most common
+                'fill_least_frequent',# Fill with rarest
+                'fill_smallest',      # Fill with smallest value
+                'fill_largest',       # Fill with largest value
+            ],
+            'recolor': [
+                'swap_smallest_two',  # Swap two smallest colors
+                'swap_largest_two',   # Swap two largest colors
+                'replace_smallest_with_largest',  # One-way replace
+                'replace_largest_with_smallest',
+                'increment_colors',   # Each color +1 (mod 10)
+                'decrement_colors',   # Each color -1 (mod 10)
+            ],
+        }
     
     def generate_batch(
         self, 
         batch_size: int, 
-        task_type: str = "mixed"
+        task_type: str = "mixed",
+        variation: str = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Generate a batch of training examples.
@@ -43,14 +70,12 @@ class ColorTaskGenerator:
         Args:
             batch_size: Number of examples
             task_type: Type of task or "mixed" for random
-            
-        Returns:
-            (input_grids, target_grids) as tensors
+            variation: Specific variation, or None for random
         """
         inputs = []
         targets = []
         
-        task_types = ["identity", "mask_color", "find_dominant", "recolor"]
+        task_types = list(self.task_variations.keys())
         
         for _ in range(batch_size):
             if task_type == "mixed":
@@ -58,7 +83,13 @@ class ColorTaskGenerator:
             else:
                 t = task_type
             
-            inp, tgt = self._generate_single(t)
+            # Get variation
+            if variation:
+                v = variation
+            else:
+                v = random.choice(self.task_variations[t])
+            
+            inp, tgt = self._generate_single(v)
             inputs.append(inp)
             targets.append(tgt)
         
@@ -74,7 +105,6 @@ class ColorTaskGenerator:
             pad_h = max_h - h
             pad_w = max_w - w
             
-            # Pad with 0 (background)
             inp_padded = np.pad(inp, ((0, pad_h), (0, pad_w)), constant_values=0)
             tgt_padded = np.pad(tgt, ((0, pad_h), (0, pad_w)), constant_values=0)
             
@@ -86,19 +116,51 @@ class ColorTaskGenerator:
             torch.tensor(np.array(padded_targets), dtype=torch.long)
         )
     
-    def _generate_single(self, task_type: str) -> Tuple[np.ndarray, np.ndarray]:
-        """Generate a single training example."""
+    def _generate_single(self, variation: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Generate a single training example for a specific variation."""
         
-        if task_type == "identity":
+        # Identity
+        if variation == 'identity':
             return self._task_identity()
-        elif task_type == "mask_color":
-            return self._task_mask_color()
-        elif task_type == "find_dominant":
-            return self._task_find_dominant()
-        elif task_type == "recolor":
-            return self._task_recolor()
+        
+        # Mask variations
+        elif variation == 'mask_smallest':
+            return self._task_mask_by_criterion('smallest')
+        elif variation == 'mask_largest':
+            return self._task_mask_by_criterion('largest')
+        elif variation == 'mask_most_frequent':
+            return self._task_mask_by_criterion('most_frequent')
+        elif variation == 'mask_least_frequent':
+            return self._task_mask_by_criterion('least_frequent')
+        elif variation == 'mask_random':
+            return self._task_mask_by_criterion('random')
+        
+        # Fill variations
+        elif variation == 'fill_most_frequent':
+            return self._task_fill_by_criterion('most_frequent')
+        elif variation == 'fill_least_frequent':
+            return self._task_fill_by_criterion('least_frequent')
+        elif variation == 'fill_smallest':
+            return self._task_fill_by_criterion('smallest')
+        elif variation == 'fill_largest':
+            return self._task_fill_by_criterion('largest')
+        
+        # Recolor variations
+        elif variation == 'swap_smallest_two':
+            return self._task_swap_colors('smallest_two')
+        elif variation == 'swap_largest_two':
+            return self._task_swap_colors('largest_two')
+        elif variation == 'replace_smallest_with_largest':
+            return self._task_replace_color('smallest', 'largest')
+        elif variation == 'replace_largest_with_smallest':
+            return self._task_replace_color('largest', 'smallest')
+        elif variation == 'increment_colors':
+            return self._task_shift_colors(1)
+        elif variation == 'decrement_colors':
+            return self._task_shift_colors(-1)
+        
         else:
-            raise ValueError(f"Unknown task type: {task_type}")
+            raise ValueError(f"Unknown variation: {variation}")
     
     def _random_grid(self, density: float = 0.5) -> np.ndarray:
         """Generate a random grid with colors."""
@@ -107,94 +169,107 @@ class ColorTaskGenerator:
         
         grid = np.zeros((h, w), dtype=np.int64)
         
-        # Randomly place colored pixels
         num_pixels = int(h * w * density)
         for _ in range(num_pixels):
             r = random.randint(0, h - 1)
             c = random.randint(0, w - 1)
-            color = random.randint(1, self.num_colors - 1)  # 1-9, not 0
+            color = random.randint(1, self.num_colors - 1)
             grid[r, c] = color
         
         return grid
     
-    def _task_identity(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Task: Output the same grid as input.
+    def _get_color_stats(self, grid: np.ndarray) -> Dict:
+        """Compute color statistics for a grid."""
+        colors = grid.flatten()
+        colors = colors[colors != 0]  # Exclude background
         
-        Purpose: Learn to encode and decode colors correctly.
-        This is the most basic task - if the model can't do this,
-        nothing else will work.
-        """
+        if len(colors) == 0:
+            return {'colors': [], 'counts': {}, 'sorted': []}
+        
+        unique, counts = np.unique(colors, return_counts=True)
+        count_dict = dict(zip(unique, counts))
+        sorted_by_value = sorted(unique)
+        sorted_by_freq = sorted(unique, key=lambda c: count_dict[c], reverse=True)
+        
+        return {
+            'colors': list(unique),
+            'counts': count_dict,
+            'sorted_by_value': sorted_by_value,
+            'sorted_by_freq': sorted_by_freq,
+        }
+    
+    # ============= TASK IMPLEMENTATIONS =============
+    
+    def _task_identity(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Output same as input."""
         grid = self._random_grid()
         return grid, grid.copy()
     
-    def _task_mask_color(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Task: Keep only one specific color, set others to 0.
-        
-        Purpose: Learn to identify and isolate colors.
-        The model must understand "this pixel is color X" vs "not color X".
-        """
+    def _task_mask_by_criterion(self, criterion: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Keep only one color based on criterion."""
         grid = self._random_grid()
+        stats = self._get_color_stats(grid)
         
-        # Find colors present (excluding 0)
-        colors_present = list(set(grid.flatten()) - {0})
-        if len(colors_present) == 0:
-            # Empty grid - just return identity
+        if not stats['colors']:
             return grid, grid.copy()
         
-        # Always keep the SMALLEST color (deterministic - model can learn this)
-        keep_color = min(colors_present)
+        # Select which color to keep
+        if criterion == 'smallest':
+            keep = min(stats['colors'])
+        elif criterion == 'largest':
+            keep = max(stats['colors'])
+        elif criterion == 'most_frequent':
+            keep = stats['sorted_by_freq'][0]
+        elif criterion == 'least_frequent':
+            keep = stats['sorted_by_freq'][-1]
+        elif criterion == 'random':
+            keep = random.choice(stats['colors'])
+        else:
+            keep = min(stats['colors'])
         
-        # Output: only that color, rest is 0
-        output = np.where(grid == keep_color, keep_color, 0)
-        
+        output = np.where(grid == keep, keep, 0)
         return grid, output
     
-    def _task_find_dominant(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Task: Fill entire grid with the most common color.
-        
-        Purpose: Learn to count colors and identify the dominant one.
-        Requires understanding color frequency.
-        """
+    def _task_fill_by_criterion(self, criterion: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Fill all non-zero positions with color based on criterion."""
         grid = self._random_grid(density=0.7)
+        stats = self._get_color_stats(grid)
         
-        # Find most common non-zero color
-        colors = grid.flatten()
-        colors = colors[colors != 0]
-        
-        if len(colors) == 0:
+        if not stats['colors']:
             return grid, grid.copy()
         
-        # Count occurrences
-        unique, counts = np.unique(colors, return_counts=True)
-        dominant = unique[np.argmax(counts)]
+        # Select fill color
+        if criterion == 'most_frequent':
+            fill = stats['sorted_by_freq'][0]
+        elif criterion == 'least_frequent':
+            fill = stats['sorted_by_freq'][-1]
+        elif criterion == 'smallest':
+            fill = min(stats['colors'])
+        elif criterion == 'largest':
+            fill = max(stats['colors'])
+        else:
+            fill = stats['sorted_by_freq'][0]
         
-        # Output: fill with dominant color (only non-zero positions)
-        output = np.where(grid != 0, dominant, 0)
-        
+        output = np.where(grid != 0, fill, 0)
         return grid, output
     
-    def _task_recolor(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Task: Swap two colors.
-        
-        Purpose: Learn color relationships and transformations.
-        If color A becomes B, every A must become B.
-        """
+    def _task_swap_colors(self, which: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Swap two colors."""
         grid = self._random_grid()
+        stats = self._get_color_stats(grid)
         
-        # Find colors present
-        colors_present = list(set(grid.flatten()) - {0})
-        if len(colors_present) < 2:
+        if len(stats['colors']) < 2:
             return grid, grid.copy()
         
-        # Always swap the two SMALLEST colors (deterministic)
-        sorted_colors = sorted(colors_present)
-        c1, c2 = sorted_colors[0], sorted_colors[1]
+        sorted_colors = stats['sorted_by_value']
         
-        # Swap
+        if which == 'smallest_two':
+            c1, c2 = sorted_colors[0], sorted_colors[1]
+        elif which == 'largest_two':
+            c1, c2 = sorted_colors[-1], sorted_colors[-2]
+        else:
+            c1, c2 = sorted_colors[0], sorted_colors[1]
+        
         output = grid.copy()
         mask1 = grid == c1
         mask2 = grid == c2
@@ -202,23 +277,57 @@ class ColorTaskGenerator:
         output[mask2] = c1
         
         return grid, output
+    
+    def _task_replace_color(self, source: str, target: str) -> Tuple[np.ndarray, np.ndarray]:
+        """Replace one color with another (one-way, not swap)."""
+        grid = self._random_grid()
+        stats = self._get_color_stats(grid)
+        
+        if len(stats['colors']) < 2:
+            return grid, grid.copy()
+        
+        sorted_colors = stats['sorted_by_value']
+        
+        if source == 'smallest':
+            src = sorted_colors[0]
+        else:
+            src = sorted_colors[-1]
+        
+        if target == 'largest':
+            tgt = sorted_colors[-1]
+        else:
+            tgt = sorted_colors[0]
+        
+        output = grid.copy()
+        output[grid == src] = tgt
+        
+        return grid, output
+    
+    def _task_shift_colors(self, shift: int) -> Tuple[np.ndarray, np.ndarray]:
+        """Shift all colors by amount (wrapping 1-9)."""
+        grid = self._random_grid()
+        
+        output = grid.copy()
+        for color in range(1, self.num_colors):
+            new_color = ((color - 1 + shift) % 9) + 1  # Wrap 1-9
+            output[grid == color] = new_color
+        
+        return grid, output
 
 
 class ColorDataLoader:
-    """
-    DataLoader for color training tasks.
-    
-    Generates batches on-the-fly (infinite data!).
-    """
+    """DataLoader for color training tasks."""
     
     def __init__(
         self, 
         batch_size: int = 32,
         num_colors: int = 10,
-        task_type: str = "mixed"
+        task_type: str = "mixed",
+        variation: str = None,
     ):
         self.batch_size = batch_size
         self.task_type = task_type
+        self.variation = variation
         self.generator = ColorTaskGenerator(num_colors=num_colors)
     
     def __iter__(self) -> Generator:
@@ -226,36 +335,41 @@ class ColorDataLoader:
         while True:
             yield self.generator.generate_batch(
                 self.batch_size, 
-                self.task_type
+                self.task_type,
+                self.variation,
             )
     
     def get_batch(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """Get a single batch."""
         return self.generator.generate_batch(
             self.batch_size,
-            self.task_type
+            self.task_type,
+            self.variation,
         )
 
 
 # Testing
 if __name__ == "__main__":
-    print("Testing ColorTaskGenerator...")
+    print("Testing Enhanced ColorTaskGenerator...")
+    print("=" * 60)
     
     gen = ColorTaskGenerator()
     
-    # Test each task type
-    for task in ["identity", "mask_color", "find_dominant", "recolor"]:
-        inp, tgt = gen.generate_batch(4, task)
+    # Show all variations
+    print("\nAvailable variations:")
+    for task, variations in gen.task_variations.items():
+        print(f"  {task}:")
+        for v in variations:
+            print(f"    - {v}")
+    
+    # Test each variation
+    print("\nTesting each variation...")
+    for task, variations in gen.task_variations.items():
         print(f"\n{task}:")
-        print(f"  Input shape: {inp.shape}")
-        print(f"  Target shape: {tgt.shape}")
-        print(f"  Sample input:\n{inp[0].numpy()}")
-        print(f"  Sample target:\n{tgt[0].numpy()}")
+        for v in variations:
+            inp, tgt = gen._generate_single(v)
+            match = np.array_equal(inp, tgt)
+            print(f"  {v}: in={inp.shape}, out={tgt.shape}, same={match}")
     
-    # Test dataloader
-    print("\n\nTesting ColorDataLoader...")
-    loader = ColorDataLoader(batch_size=8)
-    inp, tgt = loader.get_batch()
-    print(f"Batch shapes: {inp.shape}, {tgt.shape}")
-    
-    print("\n✓ Color tasks working!")
+    print("\n✓ Enhanced color tasks working!")
+    print(f"Total variations: {sum(len(v) for v in gen.task_variations.values())}")
