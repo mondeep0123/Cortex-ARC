@@ -206,4 +206,44 @@ Cortex-ARC/
 
 ---
 
+## 📦 Pre-trained Models
+
+Download pre-trained weights from [Releases](https://github.com/mondeep0123/Cortex-ARC/releases):
+
+| Model | Size | ARC Eval | Description |
+|-------|------|----------|-------------|
+| `cortex_v4.pth` | 5.2 MB | 58% | 25 tasks, 128 embed, 6 layers |
+
+```python
+# Load pre-trained model
+import torch
+from src.cortex.model import CortexModel
+
+model = CortexModel(embed_dim=128, num_layers=6)
+checkpoint = torch.load('models/cortex_v4.pth')
+model.load_state_dict(checkpoint['model_state_dict'])
+```
+
+---
+
+## 📞 Contact
+
+For questions, collaborations, or feedback:
+
+- **Discord**: [mondeep.blend](https://discord.com/users/1085083654251872357)
+- **GitHub Issues**: [Open an issue](https://github.com/mondeep0123/Cortex-ARC/issues)
+
+---
+
+## 🌟 Contributing
+
+Contributions welcome! Areas to work on:
+- More training task variations
+- Object detection tasks
+- Pattern completion tasks
+- Multi-modal support (text + grid)
+
+---
+
 *"Intelligence is not about scale. It's about architecture."*
+
