@@ -1,0 +1,108 @@
+# ============================================
+# .gitignore for ARC-AGI Solver
+# ============================================
+# Only the WINNING approach and documentation goes to Git!
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Large Files (checkpoints & data)
+checkpoints/
+data/
+*.pt
+*.pth
+*.onnx
+models/
+
+# Results & Logs
+results/
+*.log
+
+# ============================================
+# FAILED ATTEMPT FILES (Attempts 1-28)
+# These training scripts didn't work
+# ============================================
+
+# Failed RL approaches
+train_rl_counter.py
+train_rl_vr.py
+train_rl_improved.py
+train_improved_rl.py
+
+# Failed NAC approaches
+train_nac.py
+train_nac_rounded.py
+
+# Failed hierarchical approaches
+train_hierarchical.py
+train_chunked.py
+train_extract.py
+train_stateful.py
+train_two_stage.py
+
+# Failed other approaches
+train_mamba2.py
+train_row_scanner.py
+train_vision_transformer.py
+train_object_masked_counter.py
+
+# ============================================
+# DEBUG FILES (not needed)
+# ============================================
+debug_*.py
+explain_*.py
+
+# ============================================
+# TEST FILES FROM FAILED ATTEMPTS
+# ============================================
+test_all_models.py
+test_hierarchical.py
+test_nalu_handcrafted.py
+test_row_scanner.py
+test_vision_transformer.py
+test_on_curriculum.py
+test_distilled.py
+test_grid_sizes.py
+
+# ============================================
+# FAILED PRIMITIVE IMPLEMENTATIONS
+# ============================================
+src/primitives/chunked_counter.py
+src/primitives/extract_counter.py
+src/primitives/nac_counter.py
+src/primitives/nac_rounded_counter.py
+src/primitives/stateful_counter.py
+src/primitives/row_scanner_counter.py
+
+# ============================================
+# KEEP THESE IMPORTANT FILES!
+# ============================================
+# train_staged.py - THE WINNING APPROACH! (100%)
+# train_primitive_1_object_cognition.py - Object Cognition (100%)
+# train_ultimate_counter.py - 75% peak (reference)
+# memorable_moments/ - Achievement documentation
+# src/ - Core primitives and utilities
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb

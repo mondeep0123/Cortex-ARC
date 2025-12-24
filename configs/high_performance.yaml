@@ -1,0 +1,90 @@
+# High-Performance Training Configuration
+# For Maximum Teacher Accuracy (90%+ target)
+
+# Training Philosophy:
+# - Strong teachers → Strong student
+# - Distillation loses 10-20% accuracy
+# - Need 90%+ teacher to get 70%+ student
+
+object_cognition:
+  # Model Architecture - LARGE for 70%+ IoU
+  hidden_dim: 512        # Large capacity (8x baseline)
+  num_layers: 4          # Very deep for complex patterns
+  
+  # Training
+  learning_rate: 0.001   # Lower for stability with larger model
+  batch_size: 64         # Larger batches
+  max_epochs: 500        # Train until full convergence
+  patience: 40           # More patience for larger model
+  
+  # Regularization
+  weight_decay: 0.0001   # L2 regularization
+  dropout: 0.15          # More dropout for larger model
+  
+  # Data - MUCH MORE
+  train_size: 15000      # Huge curriculum for diversity
+  val_size: 3000
+  test_size: 3000
+  grid_size_range: [3, 15]  # Varied sizes including small
+  
+  # Success Criteria
+  target_accuracy: 0.70  # 70%+ IoU on test set
+  max_generalization_gap: 0.15  # <15% train-test gap
+
+numerosity:
+  # Model Architecture - LARGER for exact counting!
+  hidden_dim: 512        # Doubled from 256
+  num_layers: 3          # 3 layers sufficient
+  
+  # Training
+  learning_rate: 0.001   # Lower LR for larger model
+  batch_size: 32         # Reduce batch size (larger model)
+  max_epochs: 300        # Should converge faster
+  patience: 15           # Reduced patience
+  
+  # Regularization
+  weight_decay: 0.0001   # L2 regularization
+  dropout: 0.2           # More dropout (larger model)
+  
+  # Data
+  train_size: 20000      # More data for larger model
+  val_size: 4000
+  test_size: 4000
+  grid_size_range: [3, 15]  # Same range
+  
+  # Success Criteria
+  target_accuracy: 0.90  # 90%+ exact match
+
+geometry:
+  hidden_dim: 256
+  num_layers: 3
+  learning_rate: 0.002
+  batch_size: 64
+  max_epochs: 300
+  patience: 25
+  target_accuracy: 0.90
+
+topology:
+  hidden_dim: 256
+  num_layers: 3
+  learning_rate: 0.002
+  batch_size: 64
+  max_epochs: 300
+  patience: 25
+  target_accuracy: 0.90
+
+physics:
+  hidden_dim: 256
+  num_layers: 3
+  learning_rate: 0.002
+  batch_size: 64
+  max_epochs: 300
+  patience: 25
+  target_accuracy: 0.90
+
+# Rationale:
+# - 256 hidden dim: Enough capacity for complex patterns
+# - 3 layers: Deep enough for hierarchical features
+# - 300 epochs: Let model fully converge
+# - Cosine LR decay: Better final convergence
+# - 10K train tasks: Prevent overfitting through diversity
