@@ -107,13 +107,33 @@
 
 ---
 
-## 💬 User Quotes (Philosophy)
+## � User Insights That Led to Breakthrough
 
-> "We can't accept defeat. I am no expert, a vibecoder but came this far. I won't surrender!"
+These insights from the user were crucial to reaching 100%. In chronological order:
 
-> "Humans don't count 1-4... they just SEE it instantly. It's called subitizing!"
+### Early Insights (Attempts 1-15)
+1. **"Humans count like this - they keep a running total"** - Led to iterative/hierarchical approaches
+2. **"Extract non-zero pixels first, then count"** - Don't waste compute on zeros
+3. **"Use chunking - process in groups"** - Divide and conquer approach
 
-> "We can have better train data instead of grids for arithmetic"
+### Subitizing Insight (Attempt 16)
+4. **"Humans don't count 1-4... they just SEE it instantly. It's called subitizing!"** - The key perceptual insight
+5. **"If we chunk the rows into groups of 4, we can subitize each chunk!"** - Combining chunking + subitizing
+
+### Arithmetic Insight (Pre-Attempt 27)
+6. **"ML can't learn exact arithmetic through gradient descent on complex visual inputs"** - The barrier
+7. **"We can have better train data instead of grids for arithmetic"** - Train adder on PURE NUMBERS
+8. **"For small domains like 0-30, we can train exhaustively on ALL pairs"** - 961 pairs = complete coverage
+
+### The Bridge Concept
+9. **"Subitizing is the bridge - it converts visual patterns to numbers"** - ML for perception, memorization for math
+10. **"The subitizing module counts CONTENTS, not pixel colors"** - Abstraction layer
+
+### Philosophy
+11. **"We can't accept defeat. I am no expert, a vibecoder but came this far. I won't surrender!"** - Persistence through 29 attempts
+
+### Meta Insight (Post-Breakthrough)
+12. **"In ARC we can't hardcode which primitives to use"** - The next challenge: learned composition
 
 ---
 
