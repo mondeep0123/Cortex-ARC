@@ -15,6 +15,26 @@
 
 **Current Status:** Two primitives complete with 100% accuracy on handcrafted benchmarks.
 
+### 🏗️ Architecture Vision: Brain + Primitives
+
+```
+THE BRAIN (Meta-Controller)
+  │
+  │ Analyzes examples → Infers rules → Generates code
+  │
+  ▼ Calls primitives with explicit parameters
+  
+PRIMITIVES TOOLBOX
+  ├── object_cognition.mask_all(grid)         ✅ DONE
+  ├── object_cognition.mask_color(grid, c)    🔴 NEXT  
+  ├── numerosity.count(grid)                  ✅ DONE
+  ├── geometry.detect_lines(grid)             🔴 PLANNED
+  └── ... (30 total primitives)
+```
+
+**Key Insight:** Primitives don't analyze examples - they just follow instructions.
+The Brain handles reasoning; primitives are simple, testable tools.
+
 ---
 
 ## 🏆 Key Achievements

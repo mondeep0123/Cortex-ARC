@@ -7,6 +7,46 @@
 
 ---
 
+## 🏗️ Architecture: Brain + Primitives Toolbox
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                           THE BRAIN                                   │
+│              (Meta-Controller / Code Generator)                       │
+│                                                                       │
+│   1. Analyzes examples (input/output pairs)                          │
+│   2. Infers transformation rules                                      │
+│   3. Generates code that calls primitives                            │
+│   4. Executes on test input                                          │
+│   5. Returns result                                                  │
+└──────────────────────────────────────────────────────────────────────┘
+                              │
+                              │ Calls primitives with explicit parameters
+                              ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                      PRIMITIVES TOOLBOX                               │
+│                                                                       │
+│   # Perception                                                        │
+│   object_cognition.mask_all(grid)           ✅ DONE                  │
+│   object_cognition.mask_color(grid, c)      🔴 NEXT                  │
+│   object_cognition.mask_dominant(grid)      🔴 NEXT                  │
+│                                                                       │
+│   # Counting                                                          │
+│   numerosity.count(grid)                    ✅ DONE                  │
+│   numerosity.count_by_color(grid)           🔴 PLANNED               │
+│                                                                       │
+│   # Geometry, Topology, etc.                                          │
+│   geometry.detect_lines(grid)               🔴 PLANNED               │
+│   symmetry.detect(grid)                     🔴 PLANNED               │
+│   transform.rotate(grid, 90)                🔴 PLANNED               │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Principle:** Primitives are simple tools that take explicit inputs.
+The Brain handles reasoning about examples and decides what to call.
+
+---
+
 ## 📊 Progress Overview
 
 | Category | Total | Completed | In Progress | Planned |
