@@ -1,5 +1,5 @@
 ---
-name: Pull Request
+name: Pull request
 about: Template for submitting code contributions to Cortex-ARC
 title: ''
 labels: ''
