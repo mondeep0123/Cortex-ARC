@@ -65,6 +65,60 @@
 
 ---
 
+## 🧪 Technical Implementation Insights
+
+These are the specific technical decisions that made the winning approach work:
+
+### 1. Subitizing Module
+- **What:** Small neural network that recognizes 0-4 objects in a chunk
+- **Why:** Humans don't count small numbers, they perceive them instantly
+- **How:** Trained on extracted chunks from grids with supervised learning (MSE loss)
+- **Output:** Continuous value that gets rounded to integer
+
+### 2. Pure Arithmetic Adder
+- **What:** Simple MLP that learns `a + b = c` for integers
+- **Why:** ML struggles to learn exact arithmetic from visual inputs
+- **How:** Trained EXHAUSTIVELY on ALL 961 pairs (0+0 to 30+30)
+- **Key:** Uses pure numerical inputs, not grid representations!
+
+### 3. Running Total (Not Final Sum)
+- **What:** Add chunk counts iteratively: `total = 0 → +3 → +2 → +4 → final`
+- **Why:** Supervise on running totals, not just final answer
+- **Benefit:** More training signal, each step gets gradient
+
+### 4. Phased/Staged Learning
+```
+Phase 1: Train Subitizing → Freeze
+Phase 2: Train Adder on pure numbers → Freeze  
+Phase 3: Combine (no further training needed!)
+```
+- **Key:** Each component trained on OPTIMAL data for that task
+- **No end-to-end:** Prevents error propagation between modules
+
+### 5. Extract-Then-Chunk
+```
+Row: [1, 0, 0, 3, 0, 2, 0, 0]
+Extract non-zero: [1, 3, 2]
+Chunk (size 4): [[1, 3, 2, 0]]
+Subitize: [3]
+```
+- **Why:** Don't waste subitizing capacity on zeros
+- **Efficiency:** Only process actual objects
+
+### 6. Empty Row Handling (Critical Bug Fix!)
+```python
+# BUG: Empty rows gave subitizing([0,0,0,0]) → 0.66 → rounds to 1
+# FIX: 
+if row_mask.sum() == 0:
+    continue  # Skip empty rows entirely
+```
+- This bug caused 50%+ error on easy examples!
+
+### 7. Straight-Through Estimator (STE) for Rounding
+- **Problem:** `torch.round()` has zero gradient
+- **Solution:** Forward: round, Backward: pass gradient through
+- **Used:** After subitizing and adder outputs
+
 ## 📁 Important Files
 
 | File | Purpose |
