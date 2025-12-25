@@ -24,9 +24,9 @@ black>=23.0.0
 flake8>=6.0.0
 mypy>=1.4.0
 
-# Jupyter (optional, for notebooks)
-jupyter>=1.0.0
-ipywidgets>=8.0.0
+# Jupyter removed due to security vulnerability (CVE-2025-53000)
+# jupyter>=1.0.0
+# ipywidgets>=8.0.0
 
 # Utilities
 tqdm>=4.65.0
