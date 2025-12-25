@@ -190,6 +190,105 @@ count = subitizing(chunk)  # Output: 3 (instant recognition!)
 adder.train_on(all_pairs)  # 100% accuracy guaranteed!
 ```
 
+<details>
+<summary><b>🔬 Deep Dive: All Technical Implementation Insights</b></summary>
+
+### 4. Running Total (Not Final Sum)
+Instead of supervising only the final answer, we supervise each step:
+```python
+# Each addition step gets gradient signal
+total = 0
+total = adder(total, chunk1_count)  # Supervise here
+total = adder(total, chunk2_count)  # And here
+total = adder(total, chunk3_count)  # And here
+# More training signal = better learning
+```
+
+### 5. Extract-Then-Chunk Pipeline
+```
+Row: [1, 0, 0, 3, 0, 2, 0, 0]
+     ↓ Extract non-zero
+[1, 3, 2]
+     ↓ Pad to chunk size (4)
+[1, 3, 2, 0]
+     ↓ Subitize
+Count: 3
+```
+- **Why:** Don't waste subitizing capacity on zeros
+- **Benefit:** Denser signal for pattern recognition
+
+### 6. Phased/Staged Learning (Critical!)
+```
+┌─────────────────────────────────────────┐
+│ Phase 1: Subitizing Training            │
+│   Data: Chunks extracted from grids     │
+│   Target: Count of non-zero in chunk    │
+│   Result: 100% on 0-4 recognition       │
+│   → FREEZE weights                      │
+├─────────────────────────────────────────┤
+│ Phase 2: Adder Training                 │
+│   Data: ALL 961 pairs (0-30 × 0-30)     │
+│   Target: a + b                         │
+│   Result: 100% on addition              │
+│   → FREEZE weights                      │
+├─────────────────────────────────────────┤
+│ Phase 3: Combined Inference             │
+│   No training needed!                   │
+│   Just connect: Subitizing → Adder      │
+│   Result: 100% end-to-end               │
+└─────────────────────────────────────────┘
+```
+
+### 7. The Critical Bug Fix (Empty Rows)
+```python
+# BUG: Empty rows still processed
+# subitizing([0, 0, 0, 0]) → outputs ~0.66 → rounds to 1
+# Result: "Ghost counts" for empty rows!
+
+# Example bug impact:
+# Grid with 4 objects + 4 empty rows
+# Predicted: 4 (real) + 4 (ghost) = 8 ❌
+# Expected: 4 ✓
+
+# FIX: Skip empty rows entirely
+for row in grid:
+    row_mask = (row > 0).float()
+    if row_mask.sum() == 0:
+        continue  # Skip! No objects here
+```
+This single bug caused **50%+ error** on easy examples!
+
+### 8. Straight-Through Estimator (STE)
+```python
+class RoundSTE(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x):
+        return torch.round(x)  # Round in forward
+    
+    @staticmethod
+    def backward(ctx, grad):
+        return grad  # Pass gradient through unchanged
+
+# Used after subitizing: count = RoundSTE.apply(raw_count)
+# Enables gradient flow through rounding operation
+```
+
+### 9. Why End-to-End Training Failed
+```
+End-to-End:
+  Visual Input → [Subitizing → Adder] → Loss
+                        ↑
+              Gradients corrupted by
+              compounding errors!
+
+Staged:
+  Chunks → Subitizing → Loss ✓ (optimal for perception)
+  Numbers → Adder → Loss ✓ (optimal for arithmetic)
+  Combined → Just works! ✓
+```
+
+</details>
+
 ---
 
 ## 🚀 Quick Start
