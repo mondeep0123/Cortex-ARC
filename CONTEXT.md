@@ -80,6 +80,7 @@ These are the specific technical decisions that made the winning approach work:
 - **Why:** ML struggles to learn exact arithmetic from visual inputs
 - **How:** Trained EXHAUSTIVELY on ALL 961 pairs (0+0 to 30+30)
 - **Key:** Uses pure numerical inputs, not grid representations!
+- **Critical Discovery:** Even with rounding, adder trained on grid data had 1-2 errors on hard tests (larger counts). The fix wasn't architecture—it was changing the training DATA from grid-based running totals to pure number pairs. Better data > Better architecture!
 
 ### 3. Running Total (Not Final Sum)
 - **What:** Add chunk counts iteratively: `total = 0 → +3 → +2 → +4 → final`

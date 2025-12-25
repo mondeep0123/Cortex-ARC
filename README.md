@@ -305,6 +305,36 @@ final               → 7 ✓
 ```
 **Key:** Rounding at each step prevents small errors from compounding!
 
+### 11. Why Rounding Alone Wasn't Enough for Adder
+```
+Problem: Adder trained on GRID data still had 1-2 errors on hard tests
+
+# Adder trained on grid-based running totals:
+adder(15, 3) → 17.4 → round → 17 ❌ (should be 18)
+adder(22, 5) → 26.2 → round → 26 ❌ (should be 27)
+
+# Why? Grid training data was noisy, unbalanced
+# Some pairs seen 1000x, others seen 0x
+```
+
+**Solution: Change training DATA, not architecture!**
+```
+# Instead of: train adder on (running_total, chunk_count) from grids
+# Do this:    train adder on ALL 961 pure number pairs
+
+for a in range(31):      # 0 to 30
+    for b in range(31):  # 0 to 30
+        # Every pair seen equal times!
+        loss = (adder(a, b) - (a + b)) ** 2
+
+# ALSO: Shuffle pairs each epoch for better generalization
+# Variable training set prevents overfitting to order
+
+# Result: 100% accuracy on ALL additions!
+```
+
+**The insight:** Better training DATA > Better architecture
+
 </details>
 
 ---
