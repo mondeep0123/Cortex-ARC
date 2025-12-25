@@ -7,6 +7,16 @@
 
 ---
 
+> ⚠️ **Looking for Cortex-ARC v1 (The TTT Solver)?**
+> 
+> This project has evolved from an end-to-end ARC solver into a **"Cognitive Primitives"** architecture.
+> 
+> **Important Disclosure:** The previous v1 model releases have been **removed**. Upon review, we discovered that the reported 60% accuracy was due to **data leakage** — the evaluation was inadvertently performed on training pairs rather than the actual held-out test set. The prior claims were unfortunately incorrect.
+> 
+> This new approach focuses on building **verified, compositional skills** (Object Cognition, Numerosity) with **proper evaluation** on held-out benchmarks.
+
+---
+
 ## 🎯 Current Results
 
 | Primitive | Benchmark | Accuracy | Method |
