@@ -371,28 +371,35 @@ print(f"Objects: {int(count.item())}")  # Output: 4
 
 ---
 
-## 📊 Roadmap
+## 📊 Roadmap: 30 Primitives for ARC-AGI 1 & 2
 
-### ✅ Phase 1: Core Primitives (COMPLETE!)
-- [x] Object Cognition - 100% IoU
-- [x] Numerosity - 100% Accuracy
-- [x] Compositional integration
-- [x] Handcrafted benchmarks
+> **Full roadmap:** See [PRIMITIVES_ROADMAP.md](PRIMITIVES_ROADMAP.md) for detailed breakdown of all 30 primitives.
 
-### 🔄 Phase 2: Enhanced Primitives (IN PROGRESS)
-- [ ] Color-specific masking ("Count red pixels")
-- [ ] Dominant/Rare color detection
-- [ ] Object instance segmentation
+### Progress: 2/30 Primitives Complete
 
-### ⏳ Phase 3: Spatial Primitives
-- [ ] Geometry (shapes, lines, regions)
-- [ ] Topology (connectivity, holes)
-- [ ] Symmetry detection
+| Phase | Primitives | Status |
+|-------|------------|--------|
+| **Phase 1** | Object Cognition, Numerosity | ✅ 100% |
+| **Phase 2** | Color, Spatial, Geometry | 🔴 Next |
+| **Phase 3** | Topology, Pattern, Symmetry | 🔴 Planned |
+| **Phase 4** | Transformation, Part-Whole | 🔴 Planned |
+| **Phase 5** | Rule Induction, Analogy | 🔴 Planned |
+| **Phase 6** | Meta-Controller, Integration | 🔴 Future |
 
-### ⏳ Phase 4: Integration
-- [ ] Multi-primitive reasoning
-- [ ] ARC-AGI full benchmark
-- [ ] Unified solver
+### ✅ Completed
+- [x] **Object Cognition** - 100% IoU (U-Net)
+- [x] **Numerosity** - 100% (Staged Training)
+
+### 🔴 Next Priority
+- [ ] **Color Understanding** - Mask by color, dominant/rare
+- [ ] **Spatial Relationships** - Above/below, inside/outside
+- [ ] **Geometry** - Lines, shapes, regions
+
+### ⏳ Future (ARC-AGI 2)
+- [ ] Rule Induction
+- [ ] Analogy Making
+- [ ] Compositional Generalization
+- [ ] Meta-Controller (the hard part!)
 
 ---
 

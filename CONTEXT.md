@@ -150,10 +150,10 @@ if row_mask.sum() == 0:
    - `mask_all_except(grid, target_color)` - Count only one color
    - `mask_dominant(grid)` - Mask most frequent color
    
-2. **More Primitives**
-   - Geometry (shapes, lines, regions)
-   - Topology (connectivity, holes)
-   - Symmetry detection
+2. **More Primitives** - See [PRIMITIVES_ROADMAP.md](PRIMITIVES_ROADMAP.md) for full list of 30 primitives
+   - 13 Core Primitives (Chollet's priors)
+   - 17 Extended Skills for ARC-AGI 2
+   - Only 2/30 complete so far!
 
 3. **Meta-Controller** - The HARD part
    - Can't hardcode which primitives to use (violates ARC rules)
