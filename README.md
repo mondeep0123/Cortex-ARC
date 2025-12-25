@@ -287,6 +287,24 @@ Staged:
   Combined → Just works! ✓
 ```
 
+### 10. Rounding Prevents Error Accumulation
+```python
+# WITHOUT rounding:
+subitize([1,0,1,1]) → 2.97  # Close but not exact
+subitize([1,1,0,0]) → 1.89
+adder(2.97, 1.89)   → 4.83  # Error compounds!
+adder(4.83, 2.12)   → 6.91  # Getting worse...
+final               → 6.91  # Should be 7 ❌
+
+# WITH rounding after each step:
+subitize([1,0,1,1]) → 2.97 → round → 3  # Exact!
+subitize([1,1,0,0]) → 1.89 → round → 2  # Exact!
+adder(3, 2)         → 4.98 → round → 5  # Exact!
+adder(5, 2)         → 6.99 → round → 7  # Exact!
+final               → 7 ✓
+```
+**Key:** Rounding at each step prevents small errors from compounding!
+
 </details>
 
 ---
