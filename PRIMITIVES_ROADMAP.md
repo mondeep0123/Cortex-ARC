@@ -51,11 +51,11 @@ The Brain handles reasoning about examples and decides what to call.
 
 | Category | Total | Completed | In Progress | Planned |
 |----------|-------|-----------|-------------|---------|
-| Core Primitives (1-13) | 13 | 2 | 0 | 11 |
+| Core Primitives (1-13) | 13 | 3 | 0 | 10 |
 | Extended Skills (14-30) | 17 | 0 | 0 | 17 |
-| **Total** | **30** | **2** | **0** | **28** |
+| **Total** | **30** | **3** | **0** | **27** |
 
-**Current Accuracy:** 2/30 primitives at 100%
+**Current Accuracy:** 3/30 primitives at 100%
 
 ---
 
