@@ -61,21 +61,22 @@ The Brain handles reasoning about examples and decides what to call.
 
 ## ✅ COMPLETED PRIMITIVES
 
-### 1. Object Cognition ✅
+### 1. Unified Object Cognition ✅
 | Attribute | Value |
 |-----------|-------|
 | **Status** | ✅ COMPLETE |
-| **Accuracy** | 100% IoU |
-| **Date** | December 24, 2025 |
-| **File** | `train_primitive_1_object_cognition.py` |
-| **Method** | U-Net with skip connections |
-| **Description** | Segments foreground objects from background (color 0) |
+| **Accuracy** | 100% IoU (Unified) |
+| **Date** | December 26, 2025 |
+| **File** | `train_color_object_cognition_v3.py` |
+| **Method** | 2-level U-Net + FiLM Gating |
+| **Insights** | [The Roadmap to 100% Color Accuracy](./INSIGHTS_COLOR_COGNITION_v3.md) |
+| **Description** | Unified model for background removal AND selective color masking. |
 
 **Capabilities:**
-- Binary mask generation
-- Foreground/background separation
-- Spatial preservation via skip connections
-
+- [x] **Foreground Segmentation**: Mask all non-zero pixels.
+- [x] **Selective Color Attention**: Mask specific color index (0-9).
+- [x] **Small-Scale Resolution**: Handles 3x3 grids via 2-level bottleneck.
+- [x] **Topological Fidelity**: Preserves lines, corners, and diagonals.
 ---
 
 ### 2. Numerosity ✅
@@ -89,32 +90,25 @@ The Brain handles reasoning about examples and decides what to call.
 | **Description** | Counts total non-zero pixels in a grid |
 
 **Capabilities:**
-- Count 0-30+ objects
-- Subitizing (instant recognition of 0-4)
-- Exact addition via memorized lookup
+- [x] Count 0-30+ objects
+- [x] Subitizing (instant recognition of 0-4)
+- [x] Exact addition via memorized lookup
 
 ---
 
-## 🔄 CORE PRIMITIVES (Chollet's Priors)
-
-### 3. Color Awareness (Improved Object Cognition) ✅
+### 3. Color Understanding (Logic) 🔴
 | Attribute | Value |
 |-----------|-------|
-| **Status** | ✅ COMPLETE |
-| **Accuracy** | 100% (16/16 Handcrafted) |
-| **Date** | December 26, 2025 |
-| **File** | `train_color_object_cognition_v3.py` |
-| **Method** | 2-level U-Net + FiLM Gating |
-| **Insights** | [The Roadmap to 100% Color Accuracy](./INSIGHTS_COLOR_COGNITION_v3.md) |
-| **Description** | Selects and masks specific color indices (0-9) |
+| **Status** | 🔴 PLANNED |
+| **Priority** | HIGH |
+| **Description** | Identify, compare, and reason about colors (above masking) |
 
 **Sub-capabilities needed:**
 - [ ] Identify dominant color
 - [ ] Identify rarest color
-- [ ] Count specific color
-- [ ] Mask by color (keep only red, etc.)
+- [ ] Identify background (most frequent color)
 - [ ] Color frequency histogram
-- [ ] Color swapping rules
+- [ ] Color swapping/remapping logic
 
 ---
 

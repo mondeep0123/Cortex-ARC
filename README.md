@@ -19,11 +19,10 @@
 
 ## 🎯 Current Results
 
-| Object Cognition | 16 Handcrafted | **100% IoU** | Spatial Preservation (2-level U-Net) |
-| Color Awareness  | 16 Handcrafted | **100% IoU** | FiLM Gated Conditioning |
-| Numerosity       | 16 Handcrafted | **100%**     | Staged Training (Subitizing + Arithmetic) |
+| Unified Object Cognition | 16 Handcrafted | **100% IoU** | 2-level U-Net + FiLM Gated Conditioning |
+| Numerosity               | 16 Handcrafted | **100%**     | Staged Training (Subitizing + Arithmetic) |
 
-Achieved with **~1.9M** parameters for Color Awareness.
+Achieved with **~1.9M** parameters for Unified Object Cognition.
 
 > 🎄 **Christmas Day Breakthrough**: 100% Numerosity achieved on December 25, 2025 after 29 attempts!
 
