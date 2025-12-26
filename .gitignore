@@ -1,7 +1,6 @@
 # ============================================
 # .gitignore for Cortex-ARC
 # ============================================
-# Only the WINNING approach, core primitives, and documentation!
 
 # Python
 __pycache__/
@@ -29,10 +28,12 @@ data/
 *.pth
 *.onnx
 models/
-
-# Results & Logs
 results/
+
+# Media & Temp
+*.png
 *.log
+diagnostic_report.txt
 
 # OS files
 .DS_Store
@@ -42,40 +43,29 @@ Thumbs.db
 .ipynb_checkpoints/
 *.ipynb
 
-# ============================================
-# EXCLUDE: Old documentation (outdated)
-# ============================================
-PROJECT_STATUS.md
-READY_TO_TRAIN.md
-ARCHITECTURE.md
-CURRICULUM.md
-LEARNING_ARCHITECTURE.md
-MODEL_SUMMARY.md
-NUMEROSITY_RESEARCH_BREAKDOWN.md
-PRIMITIVES_SETUP.md
+# Private Meta
+CONTEXT.md
+
+# GitHub Managed (Exclude to avoid overriding local edits vs GitHub interface)
+# LICENSE
+# SECURITY.md
+# CODE_OF_CONDUCT.md
+# CONTRIBUTING.md
+# PULL_REQUEST_TEMPLATE.md
 
 # ============================================
-# EXCLUDE: Failed training scripts (28 attempts)
+# EXCLUDE: Experimental/Legacy Noise
 # ============================================
 
-# RL approaches (failed)
-train_rl_counter.py
-train_rl_vr.py
-train_rl_improved.py
+# Failed training scripts (Historical 28 attempts)
+train_rl_*.py
 train_improved_rl.py
-
-# NAC approaches (failed)
-train_nac.py
-train_nac_rounded.py
-
-# Hierarchical approaches (failed)
+train_nac*.py
 train_hierarchical.py
 train_chunked.py
 train_extract.py
 train_stateful.py
 train_two_stage.py
-
-# Other failed approaches
 train_mamba2.py
 train_row_scanner.py
 train_vision_transformer.py
@@ -84,55 +74,58 @@ train_distillation.py
 train_hp_primitive.py
 train_numerosity.py
 train_numerosity_staged.py
+train_ultimate_counter.py
 
-# ============================================
-# EXCLUDE: Debug & utility scripts
-# ============================================
-debug_*.py
-explain_*.py
-check_*.py
-continue_*.py
+# Debug & temporary utility scripts
+# Note: Keeping debug_curriculum_v3.py as it is useful for visualization
+debug_num_outputs.py
+debug_numerosity.py
+debug_object_cognition_masks.py
+debug_prediction.py
+debug_segmentation.py
+debug_summation.py
+debug_hierarchical.py
+debug_nac.py
+explain_distribution_mismatch.py
+check_pixel_counting.py
+continue_stage4.py
 demo.py
 download_dataset.py
-analyze_tasks.py
 quick_eval_numerosity.py
-evaluate_handcrafted.py
 
-# ============================================
-# EXCLUDE: Test files from failed attempts
-# ============================================
+# Test files from failed attempts
 test_all_models.py
 test_hierarchical.py
-test_nalu_handcrafted.py
 test_row_scanner.py
 test_vision_transformer.py
 test_on_curriculum.py
 test_distilled.py
 test_grid_sizes.py
-test_numerosity_handcrafted.py
 test_ultimate_counter.py
 
-# ============================================
-# EXCLUDE: Failed primitive implementations
-# ============================================
+# Failed primitive implementations
 src/primitives/chunked_counter.py
 src/primitives/extract_counter.py
 src/primitives/nac_counter.py
 src/primitives/nac_rounded_counter.py
 src/primitives/stateful_counter.py
 src/primitives/row_scanner_counter.py
+src/primitives/hierarchical_counter.py
+src/primitives/mamba2_counter.py
+src/primitives/vision_transformer_counter.py
+src/primitives/distillation_counting.py
+src/primitives/rl_numerosity_loss.py
 
 # Old primitives folder at root
 primitives/
 
 # ============================================
-# KEEP THESE IMPORTANT FILES!
+# KEEP CORE SYSTEM
 # ============================================
-# README.md - Main documentation
-# requirements.txt - Dependencies
-# train_staged.py - THE WINNING APPROACH! (100%)
-# train_primitive_1_object_cognition.py - Object Cognition (100%)
-# train_ultimate_counter.py - 75% peak (reference)
-# memorable_moments/ - Achievement documentation
-# src/ - Core primitives and utilities
-# configs/ - Configuration files
+# train_color_object_cognition_v3.py
+# train_primitive_1_object_cognition.py
+# train_staged.py
+# diagnostic_eval.py
+# evaluate_color_cognition_comprehensive.py
+# evaluate_handcrafted.py
+# analyze_tasks.py

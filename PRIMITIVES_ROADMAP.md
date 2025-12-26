@@ -28,7 +28,7 @@
 │                                                                       │
 │   # Perception                                                        │
 │   object_cognition.mask_all(grid)           ✅ DONE                  │
-│   object_cognition.mask_color(grid, c)      🔴 NEXT                  │
+│   object_cognition.mask_color(grid, c)      ✅ DONE                  │
 │   object_cognition.mask_dominant(grid)      🔴 NEXT                  │
 │                                                                       │
 │   # Counting                                                          │
@@ -55,7 +55,7 @@ The Brain handles reasoning about examples and decides what to call.
 | Extended Skills (14-30) | 17 | 0 | 0 | 17 |
 | **Total** | **30** | **2** | **0** | **28** |
 
-**Current Accuracy:** 2/30 primitives at 100%
+**Current Accuracy:** 3/30 primitives at 100%
 
 ---
 
@@ -97,12 +97,16 @@ The Brain handles reasoning about examples and decides what to call.
 
 ## 🔄 CORE PRIMITIVES (Chollet's Priors)
 
-### 3. Color Understanding 🔴
+### 3. Color Awareness (Improved Object Cognition) ✅
 | Attribute | Value |
 |-----------|-------|
-| **Status** | 🔴 PLANNED |
-| **Priority** | HIGH |
-| **Description** | Identify, compare, and manipulate colors |
+| **Status** | ✅ COMPLETE |
+| **Accuracy** | 100% (16/16 Handcrafted) |
+| **Date** | December 26, 2025 |
+| **File** | `train_color_object_cognition_v3.py` |
+| **Method** | 2-level U-Net + FiLM Gating |
+| **Insights** | [The Roadmap to 100% Color Accuracy](./INSIGHTS_COLOR_COGNITION_v3.md) |
+| **Description** | Selects and masks specific color indices (0-9) |
 
 **Sub-capabilities needed:**
 - [ ] Identify dominant color

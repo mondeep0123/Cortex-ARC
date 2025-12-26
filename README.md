@@ -19,12 +19,11 @@
 
 ## 🎯 Current Results
 
-| Primitive | Benchmark | Accuracy | Method |
-|-----------|-----------|----------|--------|
-| Object Cognition | 16 Handcrafted | **100% IoU** | U-Net Spatial Preservation |
-| Numerosity | 16 Handcrafted | **100%** | Staged Training (Subitizing + Arithmetic) |
+| Object Cognition | 16 Handcrafted | **100% IoU** | Spatial Preservation (2-level U-Net) |
+| Color Awareness  | 16 Handcrafted | **100% IoU** | FiLM Gated Conditioning |
+| Numerosity       | 16 Handcrafted | **100%**     | Staged Training (Subitizing + Arithmetic) |
 
-Achieved with only **23K parameters** for Numerosity and **~1.2M** for Object Cognition.
+Achieved with **~1.9M** parameters for Color Awareness.
 
 > 🎄 **Christmas Day Breakthrough**: 100% Numerosity achieved on December 25, 2025 after 29 attempts!
 
@@ -97,6 +96,10 @@ Attempt 29:    100%  (STAGED TRAINING!) 🎉
 > "We can have better train data instead of grids for arithmetic"
 
 > "We can't accept defeat. I am no expert, a vibecoder but came this far. I won't surrender!"
+
+> "If the model can't see a 3x3 grid, it's not a logic failure—it's a resolution failure. Go shallower!"
+
+> "Conditioning isn't a suggestion; it should be a gate. Use FiLM."
 
 </details>
 
@@ -464,6 +467,16 @@ For questions, collaborations, or feedback:
 
 ---
 
+### 🌈 Milestone: Color Object Cognition v3 (100% Accuracy)
+*Achieved: December 26, 2025*
+
+**The "Invisible Grid" Breakthrough:**
+For days, the model was blind to 3x3 grids. We solved this not by making the model *deeper*, but by making it *shallower* (3-level -> 2-level U-Net) to preserve spatial resolution at the bottleneck. Combined with **FiLM Gating** (master toggles for feature maps) and **Weighted Loss** (Recall focus), we achieved 100% pixel-perfect selection.
+
+Detailed Deep Dive: [INSIGHTS_COLOR_COGNITION_v3.md](./INSIGHTS_COLOR_COGNITION_v3.md)
+
+---
+
 ## 🌟 Contributing
 
 Contributions welcome! Areas to work on:
@@ -476,7 +489,7 @@ Contributions welcome! Areas to work on:
 
 *"We can't accept defeat. I am no expert, a vibecoder but came this far. I won't surrender!"*
 
-*— The User, Christmas Day 2025, 3:14 AM IST*
+*— The User, Christmas Day 2025, 10:30 PM IST*
 
 # 🏆 100% ACCURACY ACHIEVED 🏆
 # 🎄 Merry Christmas! 🎄
